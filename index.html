@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altudo — Rewards &amp; Recognition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F0F4FA; --surf:#fff; --card:#fff; --line:#E5EAF2;
+  --sh:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.08),0 12px 32px rgba(0,0,0,.06);
+  --pri:#4B70F5; --pri-bg:#EEF2FF; --pri-d:#3558D6;
+  --gold:#B87817; --gold-bg:#FEF7E0;
+  --ok:#059669; --ok-bg:#D1FAE5;
+  --warn:#D97706; --warn-bg:#FEF3C7;
+  --err:#DC2626; --err-bg:#FEE2E2;
+  --txt:#1E2533; --txt2:#374151; --mut:#6B7A99; --rad:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',-apple-system,sans-serif;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;}
+
+/* ── HEADER ── */
+.hdr{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;height:56px;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-ico{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--pri),var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-name{font-weight:800;font-size:15px;color:var(--txt);}
+.logo-tag{font-size:9px;color:var(--mut);letter-spacing:.3px;}
+.hdr-nav{display:flex;gap:2px;flex:1;overflow-x:auto;}
+.hdr-nav::-webkit-scrollbar{display:none;}
+.nav-btn{background:transparent;color:var(--mut);border:none;border-radius:7px;padding:6px 13px;cursor:pointer;font-weight:500;font-size:12px;white-space:nowrap;transition:all .15s;font-family:inherit;}
+.nav-btn:hover{background:#F3F4F6;color:var(--txt);}
+.nav-btn.act{background:var(--pri-bg);color:var(--pri);font-weight:700;}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.user-chip{display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid var(--line);border-radius:20px;padding:5px 12px 5px 7px;}
+.user-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.user-meta{line-height:1.2;}
+.user-name{font-size:11px;font-weight:700;color:var(--txt);}
+.user-role{font-size:9px;color:var(--mut);}
+.logout-btn{background:none;border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--mut);cursor:pointer;font-family:inherit;transition:all .15s;}
+.logout-btn:hover{border-color:var(--err);color:var(--err);}
+
+/* ── EMPLOYEE FORM WRAPPER ── */
+.emp-wrap{min-height:calc(100vh - 56px);display:flex;flex-direction:column;}
+.emp-hero{background:linear-gradient(135deg,#EEF2FF 0%,#fff 60%,#FEF7E0 100%);border-bottom:1px solid var(--line);padding:28px 24px 20px;}
+.emp-hero-inner{max-width:740px;margin:0 auto;}
+.emp-period{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:600;color:var(--mut);margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.emp-hero h1{font-size:22px;font-weight:800;color:var(--txt);margin-bottom:5px;}
+.emp-hero p{color:var(--mut);font-size:13px;line-height:1.5;}
+.emp-body{flex:1;padding:24px;max-width:740px;margin:0 auto;width:100%;}
+.emp-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:#fff;}
+.emp-foot-left{font-size:10px;color:var(--mut);}
+.admin-link{display:flex;align-items:center;gap:5px;background:none;border:none;font-size:10px;color:#CBD5E1;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:5px;transition:all .2s;}
+.admin-link:hover{color:var(--mut);background:#F8FAFC;}
+
+/* ── PAGE HEADER (admin) ── */
+.phdr{background:#fff;border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;}
+.ph-title{font-weight:700;font-size:16px;color:var(--txt);}
+.ph-sub{color:var(--mut);font-size:11px;margin-top:3px;}
+
+/* ── MAIN (admin) ── */
+main{padding:20px 24px;max-width:1100px;margin:0 auto;}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh);}
+.card-t{font-weight:700;font-size:13px;color:var(--txt);margin-bottom:13px;}
+
+/* ── GRIDS ── */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.g-ld{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;}
+.g-cp{display:grid;grid-template-columns:1fr 1.35fr;gap:12px;}
+@media(max-width:700px){.g4,.g2,.g3,.g-ld,.g-cp{grid-template-columns:1fr;}}
+
+/* ── STAT CARDS ── */
+.stat{display:flex;align-items:center;gap:12px;}
+.stat-ico{font-size:24px;}
+.stat-val{font-size:24px;font-weight:800;line-height:1;}
+.stat-lbl{font-size:10px;color:var(--mut);margin-top:3px;}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:12px;transition:all .15s;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-pri{background:var(--pri);color:#fff;} .btn-pri:hover{background:var(--pri-d);}
+.btn-ok{background:var(--ok);color:#fff;} .btn-ok:hover{background:#047857;}
+.btn-err{background:var(--err);color:#fff;opacity:.85;} .btn-err:hover{opacity:1;}
+.btn-gh{background:#fff;color:var(--txt2);border:1px solid var(--line);} .btn-gh:hover{border-color:#9CA3AF;}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.btn-lg{padding:11px 28px;font-size:14px;}
+.btn-full{width:100%;justify-content:center;}
+
+/* ── INPUTS ── */
+.inp,.sel,.txa{background:#fff;border:1.5px solid #D1D5DB;border-radius:8px;padding:9px 12px;color:var(--txt);font-size:13px;width:100%;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;}
+.inp:focus,.sel:focus,.txa:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(75,112,245,.1);}
+.inp-icon{position:relative;}
+.inp-icon .inp{padding-right:36px;}
+.inp-icon button{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mut);font-size:14px;padding:2px;}
+.txa{resize:vertical;min-height:100px;line-height:1.6;}
+.fl{display:block;color:var(--txt2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.fg{margin-bottom:13px;}
+
+/* ── BADGES ── */
+.bdg{display:inline-block;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;}
+.bdg-pl1{background:var(--warn-bg);color:#92400E;}
+.bdg-pl2{background:#DBEAFE;color:#1E40AF;}
+.bdg-app{background:var(--ok-bg);color:#065F46;}
+.bdg-rej{background:var(--err-bg);color:#991B1B;}
+.cat-bdg{display:inline-block;background:var(--pri-bg);color:var(--pri);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:700;}
+
+/* ── TABLE ── */
+.dtbl{width:100%;border-collapse:collapse;}
+.dtbl th{text-align:left;padding:9px 12px;color:var(--mut);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:#F8FAFC;border-bottom:1px solid var(--line);}
+.dtbl td{padding:10px 12px;border-bottom:1px solid #F1F5F9;font-size:12px;color:var(--txt2);}
+.dtbl tbody tr:hover{background:#F8FAFC;cursor:pointer;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:68px;right:20px;padding:11px 18px;border-radius:9px;font-weight:600;font-size:12px;z-index:9999;box-shadow:var(--sh2);max-width:340px;opacity:0;transform:translateY(-8px);transition:all .25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.t-ok{background:var(--ok);color:#fff;}
+.t-w{background:var(--warn);color:#fff;}
+.t-e{background:var(--err);color:#fff;}
+
+/* ── MODAL OVERLAY ── */
+.movl{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
+.movl.open{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:420px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.modal-lg{max-width:560px;max-height:82vh;overflow-y:auto;}
+
+/* ── LOGIN MODAL ── */
+.login-ico{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#1E2533,#374151);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 16px;}
+.login-err{background:var(--err-bg);border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--err);margin-bottom:12px;display:none;}
+.login-err.show{display:block;}
+
+/* ── STEPS ── */
+.steps{display:flex;align-items:center;margin-bottom:22px;}
+.s-circle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;background:#E5E7EB;color:#9CA3AF;}
+.s-circle.done{background:var(--ok);color:#fff;}
+.s-circle.act{background:var(--pri);color:#fff;}
+.s-lbl{font-size:11px;color:var(--mut);margin-left:7px;white-space:nowrap;}
+.s-lbl.act{color:var(--txt);font-weight:700;}
+.s-line{flex:1;height:2px;background:#E5E7EB;margin:0 8px;}
+.s-line.done{background:var(--ok);}
+
+/* ── AWARD TYPE CARDS ── */
+.atype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
+@media(max-width:600px){.atype-grid{grid-template-columns:1fr;}}
+.atype-card{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:20px 16px;cursor:pointer;text-align:center;transition:all .2s;box-shadow:var(--sh);}
+.atype-card:hover{border-color:var(--pri);box-shadow:var(--sh2);transform:translateY(-2px);}
+.atype-card.sel{border-color:var(--pri);border-width:2px;background:var(--pri-bg);}
+
+/* ── AWARD SELECT ── */
+.asel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+.asel-card{background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:12px;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.asel-card:hover,.asel-card.sel{border-color:var(--pri);background:var(--pri-bg);}
+.asel-card.sel{border-width:2px;}
+
+/* ── ELIGIBILITY ── */
+.elig{border:1.5px solid var(--line);border-radius:var(--rad);padding:18px;}
+.elig.ok{border-color:var(--ok);background:var(--ok-bg);}
+.elig.no{border-color:var(--err);background:var(--err-bg);}
+.elig.unk{border-color:var(--warn);background:var(--warn-bg);}
+.elig-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.elig-chk{background:#fff;border-radius:8px;padding:9px 11px;border:1px solid var(--line);}
+.elig-chk.p{border-color:rgba(5,150,105,.3);}
+.elig-chk.f{border-color:rgba(220,38,38,.3);}
+
+/* ── PIPELINE ── */
+.pipe-row{display:flex;align-items:center;gap:13px;padding:9px 0;}
+.pipe-dot{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;}
+.pipe-connector{margin-left:21px;border-left:2px dashed var(--line);height:12px;}
+
+/* ── APPROVAL CARD ── */
+.acard{background:#fff;border:1px solid var(--line);border-radius:var(--rad);padding:18px;margin-bottom:12px;box-shadow:var(--sh);}
+.acard-hd{display:flex;gap:16px;align-items:flex-start;}
+.acard-body{flex:1;min-width:0;}
+.acard-actions{display:flex;flex-direction:column;gap:7px;min-width:190px;}
+.justif{background:#F8FAFC;border-radius:8px;padding:11px 13px;color:var(--txt2);font-size:11px;line-height:1.6;border-left:3px solid var(--pri);}
+.cmtbox{background:var(--ok-bg);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--txt2);border-left:3px solid var(--ok);margin-top:8px;}
+.cmtbox-warn{background:var(--err-bg);border-left-color:var(--err);}
+
+/* ── QUEUE BANNER ── */
+.q-banner{background:linear-gradient(135deg,#F8FAFC,#fff);border:1px solid var(--line);border-radius:var(--rad);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:13px;box-shadow:var(--sh);}
+
+/* ── AWARD DIR ── */
+.dir-card{background:#fff;border:1px solid var(--line);border-radius:var(--rad);padding:15px;box-shadow:var(--sh);transition:all .15s;}
+.dir-card:hover{border-color:var(--pri);box-shadow:var(--sh2);}
+
+/* ── TIMELINE ── */
+.tl{display:flex;align-items:center;margin:11px 0;}
+.tl-step{display:flex;flex-direction:column;align-items:center;min-width:48px;}
+.tl-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.tl-lbl{font-size:8px;text-align:center;margin-top:3px;}
+.tl-line{flex:1;height:2px;margin-top:14px;min-width:16px;}
+
+/* ── NOMINATION SUCCESS ── */
+.success-card{background:linear-gradient(135deg,var(--ok-bg),#fff);border:1.5px solid rgba(5,150,105,.25);border-radius:14px;padding:36px 28px;text-align:center;}
+.ref-chip{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 16px;font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--txt);margin:12px 0;letter-spacing:.5px;}
+
+/* ── INFO BOX ── */
+.info-box{background:var(--pri-bg);border:1px solid rgba(75,112,245,.2);border-radius:8px;padding:11px 13px;color:var(--txt2);font-size:11px;line-height:1.5;margin-top:12px;}
+
+/* ── LOADING ── */
+@keyframes ldots{0%,100%{opacity:.3;transform:scale(.7);}50%{opacity:1;transform:scale(1.2);}}
+.ldot{width:9px;height:9px;border-radius:50%;background:var(--pri);display:inline-block;animation:ldots 1.1s ease-in-out infinite;}
+.ldot:nth-child(2){animation-delay:.18s;}.ldot:nth-child(3){animation-delay:.36s;}
+
+/* ── UTILS ── */
+.mb8{margin-bottom:8px;}.mb12{margin-bottom:12px;}.mb16{margin-bottom:16px;}.mb20{margin-bottom:20px;}.mb24{margin-bottom:24px;}
+.mt8{margin-top:8px;}.mt10{margin-top:10px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}.mt20{margin-top:20px;}
+.fw7{font-weight:700;}.fw8{font-weight:800;}
+.fs10{font-size:10px;}.fs11{font-size:11px;}.fs12{font-size:12px;}.fs13{font-size:13px;}
+.c-pri{color:var(--pri);}.c-gold{color:var(--gold);}.c-mut{color:var(--mut);}.c-ok{color:var(--ok);}.c-err{color:var(--err);}
+.divider{border:none;border-top:1px solid var(--line);margin:10px 0;}
+.slbl{color:var(--mut);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--                    HEADER                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<header class="hdr">
+  <div class="logo">
+    <div class="logo-ico">🏅</div>
+    <div>
+      <div class="logo-name">Altudo R&amp;R</div>
+      <div class="logo-tag">REWARDS &amp; RECOGNITION · v5.0</div>
+    </div>
+  </div>
+
+  <!-- Admin nav (hidden for employees) -->
+  <nav class="hdr-nav" id="admin-nav" style="display:none"></nav>
+
+  <div class="hdr-right">
+    <!-- Logged-in user chip (hidden for employees) -->
+    <div class="user-chip" id="user-chip" style="display:none">
+      <div class="user-avatar" id="user-avatar"></div>
+      <div class="user-meta">
+        <div class="user-name" id="user-name"></div>
+        <div class="user-role" id="user-role-lbl"></div>
+      </div>
+    </div>
+    <button class="logout-btn" id="logout-btn" style="display:none" onclick="doLogout()">Logout</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--            EMPLOYEE NOMINATION FORM             -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="emp-shell">
+  <div class="emp-hero">
+    <div class="emp-hero-inner">
+      <div class="emp-period">📅 Q2 2026 · Active Nomination Cycle &nbsp;·&nbsp; <span style="color:var(--ok);font-weight:700">● Live</span></div>
+      <h1>Nominate a Colleague</h1>
+      <p>Recognise someone who's gone above and beyond. Fill in the form below — your nomination will be instantly visible to the review team.</p>
+    </div>
+  </div>
+  <div class="emp-body" id="emp-form-container"></div>
+  <footer class="emp-footer">
+    <div class="emp-foot-left">Altudo R&amp;R Policy v5.0 · Ref: ALT/ORG/HR/POL/018 · Mandatory Compliance</div>
+    <button class="admin-link" onclick="openLoginModal()" title="Admin login">🔒</button>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--               ADMIN PORTAL SHELL               -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="admin-shell" style="display:none">
+  <div class="phdr">
+    <div>
+      <div class="ph-title" id="ph-title"></div>
+      <div class="ph-sub" id="ph-sub"></div>
+    </div>
+    <div id="ph-action"></div>
+  </div>
+  <main id="mc"></main>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              ADMIN LOGIN MODAL                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="movl" id="login-modal">
+  <div class="modal">
+    <div class="login-ico">🔒</div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="fw8" style="font-size:17px;margin-bottom:5px">Admin Login</div>
+      <div class="c-mut fs12">Restricted to authorised personnel only</div>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <div class="fg">
+      <label class="fl">Email Address</label>
+      <input class="inp" id="login-email" type="email" placeholder="your.name@altudo.co" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+    </div>
+    <div class="fg">
+      <label class="fl">Password</label>
+      <div class="inp-icon">
+        <input class="inp" id="login-pw" type="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" onclick="togglePw()" id="pw-eye">👁</button>
+      </div>
+    </div>
+    <button class="btn btn-pri btn-full btn-lg mb12" onclick="doLogin()">Login →</button>
+    <button class="btn btn-gh btn-full btn-sm" onclick="closeLoginModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- GENERIC MODAL -->
+<div class="movl" id="movl" onclick="closeMod()">
+  <div class="modal modal-lg" id="modal-body" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--                  JAVASCRIPT                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<script>
+// ──────────────────────────────────────────────────
+// AUTH — Authorised admin users only
+// ──────────────────────────────────────────────────
+const ADMIN_USERS = {
+  'ayushi.taneja@altudo.co':   { pwh:'4a21d0e07b3a4dc8e18b169a06d2f81a0e84fb8b46067ce5a709cc3a680333bc',  role:'function_head', name:'Ayushi Taneja',   initials:'AT', color:'#7C3AED' },
+  'rajat.babbar@altudo.co':    { pwh:'861e177a015e2b659ba6deba174e7bc4477eb7100e65d36b4531e5c002137e20',   role:'hr',            name:'Rajat Babbar',    initials:'RB', color:'#059669' },
+  'jahanvi.batra@altudo.co':   { pwh:'908e53b7477c4f6c47651c71936cf0bd073bcfb93b791c38ad5e2fa5841c6fc3', role:'hr',            name:'Jahanvi Batra',   initials:'JB', color:'#0369A1' },
+};
+
+const AUTH = { user: null };
+
+// ──────────────────────────────────────────────────
+// DATA
+// ──────────────────────────────────────────────────
+const AWARDS = {
+  nomination:[
+    {id:'cc',  name:'Culture Champion',
+     cat:'Culture',     freq:'Quarterly', count:'3/Q',
+     auth:'Function & Practice Heads / Directors and above / Leads and above till Senior Managers',
+     elig:'All Altudians irrespective of grade and function',
+     ico:'🌟',
+     crit:'Variant 1 — In-Office Presence: Consistent office attendance for 3+ consecutive months. Punctuality and standard office hours. High productivity measured through performance metrics. Active team collaboration. Professional conduct.\nVariant 2 — Values: Displays Altudo values in all situations. Leads by doing the right things in difficult times. Ensures continuous improvement, empathy, enabling others, open conversations and quick right decisions.\nVariant 3 — Worth-Following Behaviour (for Senior Associates and below): Small but impactful contributions to project culture, people sentiments, client services or Altudo values. Manager or client written appreciation. Timesheet compliance. Self-motivation and problem-solving behaviour.'},
+
+    {id:'ec',  name:'Emerging Champion (For New Joiners)',
+     cat:'Culture',     freq:'Quarterly', count:'2/Q',
+     auth:'All Leads and above',
+     elig:'Senior Associates and below who will complete 6 months in the organization in that quarter',
+     ico:'🌱',
+     crit:'100% timesheet compliance. Follows organizational policies and procedures. Consistently exceeds performance expectations. Meets or exceeds OKRs ahead of schedule. Engages in self-upgrading activities — training programs and certifications. Shares acquired knowledge through trainings or workshops. Volunteers for additional responsibilities. Maintains excellent client relationships. Fosters a collaborative environment within the team.'},
+
+    {id:'ic',  name:'Innovation Champion',
+     cat:'Innovation',  freq:'Quarterly', count:'1/Q',
+     auth:'Function & Practice Heads',
+     elig:'All Altudians irrespective of grade and function',
+     ico:'💡',
+     crit:'Implements innovative practices enhancing team efficiency and service quality. Uses design thinking methods for optimal results in delivery teams, client retention and employee experience. Conducts at least 2 experiments per quarter with at least 1 radical experiment and shares learnings org-wide. Participates in hackathons. Experiments have well-defined goals addressing specific problems with significant findings. Positive feedback or endorsement from stakeholders, managers or peers.'},
+
+    {id:'ict', name:'Innovation Champion — Team Award',
+     cat:'Innovation',  freq:'Quarterly', count:'1/Q',
+     auth:'Function & Practice Heads',
+     elig:'Team or Function across all practices',
+     ico:'🏅',
+     crit:'Awarded based on maximum initiatives in the quarter by the function or practice. The impact of these initiatives results in outcomes such as improved processes, cost savings, revenue generation or positive impact on team morale and efficiency. Demonstrated innovation and creativity in problem-solving including novel approaches, technologies or methodologies applied to their initiatives.'},
+
+    {id:'pc',  name:'People Champion',
+     cat:'People',      freq:'Quarterly', count:'3/Q',
+     auth:'Function & Practice Heads / HR',
+     elig:'Members of enabling functions (Leads and below) OR All Managers OR All Mentors',
+     ico:'🤝',
+     crit:'Enabling Functions (Leads and below): Meets all assigned tasks and expectations of internal stakeholders. Provides proactive support to internal clients. Gets written appreciation for timely closure of tasks. Foresees problems and implements remedial actions. Brand ambassador of Altudo values in internal forums. Contributes on Vibe to build team brand. Known for problem-solving skills and relationship management.\nManagers: Attrition less than 3% on team. 100% compliance on learning targets. Sustained team sentiment score of 4.2 or above for at least a quarter.\nMentors: Anticipates and proactively supports team members. Mentors at least 2–3 juniors with mentee satisfaction rating of 3.5+. Retains mentees for 1+ year beyond average tenure. Guides mentees to sustained career progressions.'},
+
+    {id:'pfc', name:'Performance Champion',
+     cat:'Performance', freq:'Quarterly', count:'19/Q',
+     auth:'Respective Mentors or PMs OR Function & Practice Heads',
+     elig:'Individual team member below Manager (above Associate) across IT, RMG, Frontend, Testing, BA, Drupal, DevOps, Quality, Business Excellence, HR, Customer Success, Data Mining, Sales, SDR, Analytics, Marketing, Finance, Sitecore (2/Q), Project Management, Emerging Practices',
+     ico:'🏆',
+     crit:'Manager or customer appreciation. Practices Altudo values and goes the extra mile to support team members. Self-motivation and problem-solving behaviour observed. Works on and completes any initiative or innovation apart from BAU assigned work. Quality of work, productivity, team collaboration and client or team impact. For Sitecore: Accuracy, alignment with project requirements, consistency and attention to detail. For Analytics, Frontend, Marketing and Finance: Role-specific quality, productivity, team collaboration, learning and development, and client or team impact evaluated separately for Junior Associates to Senior Associates and Leads to Senior Managers.'},
+
+    {id:'pfct',name:'Performance Champion — Team Award',
+     cat:'Performance', freq:'Quarterly', count:'1/Q',
+     auth:'Function & Practice Heads',
+     elig:'A team or a function across all practices',
+     ico:'👥',
+     crit:'Team: Adherence and compliance to delivery targets. CSAT scores of 4.5 or above. High scores on team sentiments. Takes efforts to innovate, implement and share learnings with other teams. Supports organisation development through referrals, technical assessments and other hiring methodologies. Shows appropriate behaviour in mistakes management, support, learning and innovation worthy of following.\nFunction/Practice: Awarded on the basis of OKR score and outcomes achieved and new initiatives implemented in the year by the function or practice.'},
+
+    {id:'cap', name:'Capability Champion',
+     cat:'Capability',  freq:'Quarterly', count:'1/Q',
+     auth:'Capability Mentors',
+     elig:'Capability Owners',
+     ico:'⚙️',
+     crit:'Thought leadership — actively involved in thought leadership activities. Pipeline and opportunity creation — building revenue pipeline and spotting new business chances. Milestone achievements — reaching important goals like launching a POC successfully. Early client engagement — excellent first meetings or proposals that advance client discussions. Innovative solutions — creative and extra efforts to create unique solutions. Client pitches — number of pitches in the quarter.'},
+
+    {id:'hp',  name:'Hi-Pot Champion',
+     cat:'Leadership',  freq:'Quarterly', count:'1/Q',
+     auth:'Hi-Pot Mentors',
+     elig:'Hi-Pot individuals with consistent +1 initiative beyond BAU activities in 2 quarters',
+     ico:'🌠',
+     crit:'Consistently met their defined +1 initiative or target other than BAU activities in 2 quarters. Made a significant impact through their work leading to measurable business success. Came up with innovative ideas that transformed a process or solution.'},
+
+    {id:'ps',  name:'Problem Solver',
+     cat:'On-the-Spot', freq:'Quarterly', count:'1/Q',
+     auth:'Mentor, Project Manager, or Practice / Function Head',
+     elig:'Function team or Project Team member',
+     ico:'🔧',
+     crit:'Event-based instant award. Encompasses the extra mile that employees go in terms of effort, innovation and creativity and the personal initiative they show. Specifically for employees who solve a problem of high risk.'},
+
+    {id:'crc', name:'Creativity Champion',
+     cat:'On-the-Spot', freq:'Quarterly', count:'1/Q',
+     auth:'Mentor, Project Manager, or Practice / Function Head',
+     elig:'Function team or Project Team member',
+     ico:'✨',
+     crit:'For the colleague who never fails to spark inspiration in others during brainstorming sessions. Comes up with ideas that can be implemented for process improvement or that will help in the growth side of the organisation.'},
+
+    {id:'cm',  name:'Commitment Champion',
+     cat:'On-the-Spot', freq:'Quarterly', count:'1/Q',
+     auth:'Mentor, Project Manager, or Practice / Function Head',
+     elig:'Function team or Project Team member',
+     ico:'💪',
+     crit:'Recognition of the effort made by the individual and the intermediate result while performing a task. The focus is on the effort of the individual rather than the end result.'},
+
+    {id:'tp',  name:'Team Player',
+     cat:'On-the-Spot', freq:'Quarterly', count:'1/Q',
+     auth:'Mentor, Project Manager, or Practice / Function Head',
+     elig:'Function team or Project Team member',
+     ico:'🫂',
+     crit:'An Altudian who is always willing to watch out and take care of the things others might miss. Always supports colleagues or members from other teams. An Altudian who is always willing to help is an invaluable asset to the team and organisation.'},
+
+    {id:'ee',  name:'Exemplary Effort Champion',
+     cat:'On-the-Spot', freq:'Quarterly', count:'1/Q',
+     auth:'Mentor, Project Manager, or Practice / Function Head',
+     elig:'Function team or Project Team member',
+     ico:'⭐',
+     crit:'Event-based instant award. Encompasses the extra mile that employees go in terms of effort, innovation and creativity and the personal initiative they show. For employees who solve a problem of high risk.'},
+
+    {id:'ks',  name:'Knowledge Seeker Champion',
+     cat:'On-the-Spot', freq:'Quarterly', count:'1/Q',
+     auth:'Mentor, Project Manager, or Practice / Function Head',
+     elig:'Function team or Project Team member — 60+ hours of self-learning in the quarter',
+     ico:'🎓',
+     crit:'Recognises an outstanding Altudian who has undertaken significant courses and certifications. Spends 60+ hours in self-learning and undertakes certifications in a quarter. Focus on individuals who successfully combine practical workplace skills with traditional learning and academic achievement to the benefit of both themselves and Altudo.'},
+  ],
+};
+
+
+// ── Default seed data (used only when shared storage is empty) ──
+const DEFAULT_NOMS = [
+  {id:1,award:'Performance Champion',type:'nomination',nominee:'Priya Sharma',role:'Senior Associate',fn:'Frontend',nominator:'Rahul Mehta',nRole:'Lead',status:'pending_l1',q:'Q2 2026',cat:'Performance',justif:'Priya delivered zero-defect code across 3 client projects. Her code reviews elevated team output by 30% and she mentored 2 junior associates. Received written client appreciation from 2 accounts.',sub:'2026-06-15',l1:'',l2:''},
+  {id:2,award:'Innovation Champion',type:'nomination',nominee:'Amit Singh',role:'Lead',fn:'DevOps',nominator:'Neha Kapoor',nRole:'Function Head',status:'pending_l2',q:'Q2 2026',cat:'Innovation',justif:"Amit's CI/CD optimization reduced deployment time by 60%, saving 15+ engineer-hours per week. Adopted by 3 other teams and presented at the org-wide tech showcase.",sub:'2026-06-12',l1:'Strongly endorsed. Measurable and significant org-level impact.',l2:''},
+  {id:3,award:'Learning Champion',type:'nomination',nominee:'Sara Patel',role:'Manager',fn:'L&D',nominator:'Rajat Babbar',nRole:'HR Manager',status:'approved',q:'Q1 2026',cat:'Learning',justif:'Sara conducted 8 workshops with 4.7/5 avg rating. Peer learning pods she introduced boosted team certifications by 40%.',sub:'2026-03-28',l1:'Exceptional contribution to learning culture.',l2:'Approved. Sara perfectly embodies the Learning Champion spirit.'},
+  {id:4,award:'Culture Champion',type:'nomination',nominee:'Ravi Kumar',role:'Associate',fn:'Business Analysis',nominator:'Sunita Verma',nRole:'Senior Manager',status:'pending_l1',q:'Q2 2026',cat:'Culture',justif:'Ravi has become a culture ambassador — organises team connects, onboarding buddy for new joiners, and consistently demonstrates Altudo values in all interactions.',sub:'2026-06-18',l1:'',l2:''},
+  {id:5,award:'Problem Solver Award',type:'nomination',nominee:'Meera Joshi',role:'Senior Associate',fn:'Testing',nominator:'Arun Nair',nRole:'Project Manager',status:'approved',q:'Q2 2026',cat:'Performance',justif:"Resolved a critical production bug 2 hours before client demo, preventing potential contract loss worth ₹15L. Showed exceptional ownership.",sub:'2026-06-10',l1:'On-Spot — L1 N/A',l2:'Approved. Outstanding crisis management.'},
+  {id:6,award:'Maverick',type:'nomination',nominee:'Dev Anand',role:'Associate',fn:'Sitecore',nominator:'Pooja Reddy',nRole:'Associate',status:'approved',q:'Q2 2026',cat:'Innovation',justif:"Dev's creative CMS migration approach inspired the team and led to 30% faster implementation.",sub:'2026-06-20',l1:'Recognition — no approval',l2:'Recognition — no approval'},
+  {id:7,award:'Emerging Champion',type:'nomination',nominee:'Ishaan Roy',role:'Associate',fn:'Frontend',nominator:'Vikram Bose',nRole:'Lead',status:'rejected',q:'Q2 2026',cat:'Performance',justif:'Ishaan shows great potential for a new joiner.',sub:'2026-06-05',l1:'Returned — too brief. Add OKR achievements, client impact, and Altudo value alignment.',l2:''},
+];
+
+// ── Live nominations (always synced from/to shared storage) ──
+let noms = [...DEFAULT_NOMS];
+
+const MO=[{m:'Jan',n:14,a:9},{m:'Feb',n:20,a:15},{m:'Mar',n:26,a:21},{m:'Apr',n:17,a:13},{m:'May',n:31,a:24},{m:'Jun',n:24,a:17}];
+const CD=[{n:'Performance',v:22},{n:'Culture',v:14},{n:'Innovation',v:10},{n:'Learning',v:7},{n:'Leadership',v:3},{n:'Service',v:2}];
+const GRADES=['Intern','Junior Associate','Associate','Senior Associate','Lead','Manager','Senior Manager','Associate Director','Director','VP','SVP','C-Level'];
+const FNS=['Frontend','Backend / Sitecore','Testing / QA','DevOps','Business Analysis','Analytics','Data Mining','SDR / Sales','Customer Success','Marketing','Finance','HR','IT','RMG','Learning & Development','Project Management'];
+
+// RBAC
+const RBAC = {
+  function_head: { views:['nominate','approvals'],                          def:'approvals' },
+  hr:            { views:['dashboard','nominate','approvals','awards','mine'],def:'dashboard' },
+};
+const NAV = [
+  {v:'dashboard',ico:'📊',lbl:'Dashboard'},
+  {v:'nominate', ico:'📝',lbl:'Nominate'},
+  {v:'approvals',ico:'📋',lbl:'Nominations'},
+  {v:'awards',   ico:'🏆',lbl:'Award Directory'},
+  {v:'mine',     ico:'👤',lbl:'My Nominations'},
+];
+
+// Form state
+const S = {view:'',ns:2,atype:'nomination',awd:null,fd:{nm:'',em:'',gr:'',fn:'',tn:'',jt:'',im:'',nnm:'',nem:'',ngr:'',nfn:''},er:null,el:false,nd:false,af:'all',as:''};
+let lineChart=null,donutChart=null,barChart=null;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EMAIL NOTIFICATIONS via Power Automate (separate flow from Excel sync)
+// ══════════════════════════════════════════════════════════════════════════════
+//  Step 1: go to make.powerautomate.com → Create → Instant cloud flow
+//  Step 2: Trigger: "When an HTTP request is received" — leave schema blank
+//  Step 3: Add action: Office 365 Outlook → "Send an email (V2)"
+//            To:      @{json(triggerBody())?['to']}
+//            Subject: @{json(triggerBody())?['subject']}
+//            Body:    @{json(triggerBody())?['body']}
+//  Step 4: Add action: Response → Status 200
+//            Header:  Access-Control-Allow-Origin  →  *
+//  Step 5: Save → copy the HTTP POST URL and paste below ↓
+// ─────────────────────────────────────────────────────────────────────────────
+const MAIL = {
+  READY: false,            // ← set true after PA email flow is configured
+  URL:   'YOUR_EMAIL_PA_URL',  // ← paste the HTTP trigger URL here
+  HR_EMAIL:    'hr@altudo.co',  // ← HR team inbox
+  FH_EMAIL:    '',              // ← Function Head email (optional fallback)
+};
+function mailReady(){ return MAIL.READY && MAIL.URL !== 'YOUR_EMAIL_PA_URL'; }
+async function sendMail(to, subject, body){
+  if(!mailReady() || !to) return;
+  try{
+    await fetch(MAIL.URL,{
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({to, subject, body})
+    });
+    console.log('[Mail] ✅ Sent to:', to);
+  } catch(e){ console.warn('[Mail] Failed:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXCEL ONLINE + POWER AUTOMATE BACKEND// ══════════════════════════════════════════════════════════════════════════════
+// EXCEL ONLINE + POWER AUTOMATE BACKEND
+// ══════════════════════════════════════════════════════════════════════════════
+//  Step 1: Open Altudo_RnR_Tracker_Q2_2026.xlsx in Excel Online (browser)
+//  Step 2: Automate tab → New Script → delete all code → paste office-script.ts → Save
+//  Step 3: Go to make.powerautomate.com → Create → Instant cloud flow
+//  Step 4: Trigger: "When an HTTP request is received"
+//  Step 5: Add action: Excel Online (Business) → Run script → pick your file + "RnR Handler"
+//          ⚠️  CRITICAL — Map ONE param only:  payload = triggerBody()
+//  Step 6: Response → Body: @{body('Run_script')?['result']}
+//          Headers: Access-Control-Allow-Origin → * | Content-Type → application/json
+//  NOTE: This is FLOW 1 (Excel sync). For emails, set up FLOW 2 separately (see MAIL config above)
+//  Step 7: Save flow → copy the HTTP POST URL and paste below ↓
+const PA = {
+  URL:   'https://defaultb9d69197ce1f49079545b307af2335.e9.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b1b13c65e392455e90a243609d4f5375/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=0A-XzToIM83F9SaJz5udV6p2H4_8jemn3G8d3MYWH4k', 
+  READY: true                            
+};
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── API CALLS — exact same pattern as QOH dashboard (proven to work) ─────────
+// text/plain is a CORS "simple request" → no preflight OPTIONS → Power Automate accepts.
+// We do NOT use no-cors so we can actually read the response.
+
+function paConfigured() {
+  return PA.READY && PA.URL && PA.URL.indexOf('YOUR_') !== 0 && PA.URL.indexOf('http') === 0;
+}
+
+async function paCall(payload) {
+  if (!paConfigured()) throw new Error('Backend not configured');
+  const bodyStr = JSON.stringify(payload);
+  console.log('[PA] → Sending:', bodyStr);
+  const r = await fetch(PA.URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: bodyStr });
+  if (!r.ok) { const eb = await r.text().catch(()=>''); throw new Error(`HTTP ${r.status} from PA. Body: ${eb.slice(0,200)}`); }
+  const txt = await r.text();
+  console.log('[PA] ← Raw:', txt.slice(0,200));
+  try { const p=JSON.parse(txt); if(p&&p.error)console.warn('[PA] error:',p.error); return p; }
+  catch(e) { throw new Error('PA response not JSON: ' + txt.slice(0,150)); }
+}
+
+async function loadNoms() {
+  if (!paConfigured()) return false;
+  try {
+    const d = await paCall({ action: 'get', data: {} });
+    if (d && Array.isArray(d.nominations) && d.nominations.length > 0) {
+      noms = d.nominations; return true;
+    }
+  } catch(e) { console.warn('[PA] load failed:', e.message); }
+  return false;
+}
+
+async function addNomToSheet(nom) {
+  if (!paConfigured()) return;
+  try { const r=await paCall({action:'add',data:{...nom,id:String(nom.id)}}); console.log('[PA] add:',r); }
+  catch(e) { console.warn('[PA] add failed:',e.message); toast('⚠️ Saved locally but Excel sync failed.','w'); }
+}
+async function updateNomInSheet(id) {
+  if (!paConfigured()) return;
+  const nom=noms.find(n=>String(n.id)===String(id));
+  if(!nom){console.warn('[PA] id not found:',id);return;}
+  try { const r=await paCall({action:'update',data:{id:String(nom.id),status:nom.status,l1:nom.l1||'',l2:nom.l2||''}}); console.log('[PA] update:',r); if(r&&r.status==='not_found')toast('⚠️ Row not found in Excel.','w'); }
+  catch(e) { console.warn('[PA] update failed:',e.message); toast('⚠️ Excel sync failed.','w'); }
+}
+
+// ── POLLING — every 12 s while admin is logged in ────────────────────────────
+let pollTimer = null;
+function startPoll() {
+  stopPoll();
+  pollTimer = setInterval(async () => {
+    if (!AUTH.user) { stopPoll(); return; }
+    const hadNew = await loadNoms();
+    if (hadNew) {
+      renderAdminNav();
+      if (['dashboard','approvals','mine'].includes(S.view)) gv(S.view);
+    }
+  }, 12000);
+}
+function stopPoll() { if(pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const fc = document.getElementById('emp-form-container');
+  if (fc) fc.innerHTML = `
+    <div style="text-align:center;padding:48px 20px">
+      <div style="font-size:28px;margin-bottom:10px">${PA.READY ? '🔄' : '📋'}</div>
+      <div style="color:var(--mut);font-size:12px">${PA.READY ? 'Connecting to Excel…' : 'Loading form…'}</div>
+    </div>`;
+  await loadNoms();
+  renderEmpForm();
+}
+
+async function refreshFromStorage() {
+  await loadNoms();
+  if (AUTH.user) gv(S.view);
+  toast(PA.READY ? '↻ Refreshed from Excel.' : '↻ Refreshed.');
+}
+
+// ── SETUP BANNER (shown in admin when PA not yet configured) ──────────────────
+function gsSetupBanner() {
+  if (PA.READY) return '';
+  return `<div style="background:#FEF3C7;border:1px solid #D97706;border-radius:var(--rad);padding:13px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+    <span style="font-size:18px;flex-shrink:0">⚠️</span>
+    <div style="font-size:12px;color:#92400E;line-height:1.5">
+      <strong>Excel Online not connected yet.</strong> Nominations will not appear here until Power Automate is set up.<br>
+      <a href="#" onclick="openMod(gsSetupModal());return false" style="color:var(--pri);font-weight:700;margin-left:0">View setup guide →</a>
+    </div>
+  </div>`;
+}
+
+function gsSetupModal() {
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="fw8 fs14">Excel Online + Power Automate Setup</div>
+    <button onclick="closeMod()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--mut)">×</button>
+  </div>
+  ${[
+    ['1','Add the Office Script to Excel','Open the Excel file in Excel Online (browser). Click <strong>Automate</strong> tab → <strong>New Script</strong>. Delete all code, paste the entire <strong>office-script.ts</strong> file, and click Save. Name it <em>RnR Handler</em>.'],
+    ['2','Create a Power Automate flow','Go to <strong>make.powerautomate.com</strong> → Create → Instant cloud flow. Add trigger: <em>When an HTTP request is received</em>. Leave the JSON schema blank and click Done.'],
+    ['3','Add Run Script action','Add action: <strong>Excel Online (Business) → Run script</strong>. Location: OneDrive for Business. Pick your Excel file. Script: <em>RnR Handler</em>. Map: <code>action = triggerBody()?[\'action\']</code> and <code>jsonData = triggerBody()?[\'data\']</code>.'],
+    ['4','Add Response action','Add action: <strong>Response</strong>. Status Code: 200. Body: <code>@{body(\'Run_script\')?[\'result\']}</code>. Add header: <code>Access-Control-Allow-Origin</code> = <code>*</code>. Save the flow.'],
+    ['5','Paste the URL','Copy the HTTP POST URL from the trigger step. Open <code>rnr-platform.html</code> in Notepad/VS Code. Find <code>PA = {</code> near the top. Paste the URL into <code>PA.URL</code> and set <code>PA.READY: true</code>. Save.'],
+    ['6','Test it','Open the HTML file, submit a test nomination. Log in as HR → click ↻ Refresh. The nomination row will appear in the Excel Nominations sheet AND in the dashboard.'],
+  ].map(([n,t,d])=>`<div style="display:flex;gap:12px;margin-bottom:14px">
+    <div style="width:24px;height:24px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0">${n}</div>
+    <div><div class="fw7 fs12 mb4">${t}</div><div class="c-mut fs11" style="line-height:1.5">${d}</div></div>
+  </div>`).join('')}
+  <div style="background:var(--ok-bg);border-radius:8px;padding:11px 13px;font-size:11px;color:var(--ok);border:1px solid rgba(5,150,105,.2)">
+    ✅ Once set up: every employee nomination writes a new row to the Excel file instantly. Ayushi sees it in her L1 queue. HR sees it in the dashboard. Power Query can also pull this data into any other Excel report.
+  </div>`;
+}
+
+// ──────────────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────────────
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const stats = () => ({
+  pl1: noms.filter(n=>n.status==='pending_l1').length,
+  pl2: noms.filter(n=>n.status==='pending_l2').length,
+  app: noms.filter(n=>n.status==='approved').length,
+  tot: noms.filter(n=>n.q==='Q2 2026').length
+});
+function bdg(st){const m={pending_l1:'bdg-pl1 ⏳ Pending L1',pending_l2:'bdg-pl2 🔵 Pending HR',approved:'bdg-app ✅ Approved',rejected:'bdg-rej ↩ Returned'};const[c,...r]=(m[st]||'bdg '+st).split(' ');return`<span class="bdg ${c}">${r.join(' ')}</span>`;}
+function tcol(t){return'var(--pri)';}
+function tlbl(t){return'Nomination Award';}
+function allAwds(){return[...AWARDS.nomination.map(a=>({...a,type:'nomination'}))];}
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.className=`toast t-${type} show`;el.textContent=msg;setTimeout(()=>el.className='toast',4000);}
+function openMod(html){document.getElementById('modal-body').innerHTML=html;document.getElementById('movl').classList.add('open');}
+function closeMod(){document.getElementById('movl').classList.remove('open');}
+function genRef(){return'NOM-'+Math.random().toString(36).substring(2,8).toUpperCase();}
+
+// ──────────────────────────────────────────────────
+// AUTH FUNCTIONS
+// ──────────────────────────────────────────────────
+function openLoginModal(){
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pw').value='';
+  document.getElementById('login-err').className='login-err';
+  document.getElementById('login-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('login-email').focus(),200);
+}
+function closeLoginModal(){document.getElementById('login-modal').classList.remove('open');}
+function togglePw(){const pw=document.getElementById('login-pw');pw.type=pw.type==='password'?'text':'password';}
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value.toLowerCase().trim();
+  const pw    = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-err');
+  const user  = ADMIN_USERS[email];
+
+  if(!email){errEl.textContent='Please enter your email address.';errEl.className='login-err show';return;}
+  if(!user){errEl.textContent='This email is not authorised for admin access.';errEl.className='login-err show';return;}
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
+  const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(user.pwh !== hash){errEl.textContent='Incorrect password. Please try again.';errEl.className='login-err show';return;}
+
+  // Success
+  AUTH.user = { email, ...user };
+  closeLoginModal();
+  enterAdminPortal();
+}
+
+function enterAdminPortal(){
+  const u = AUTH.user;
+  // Show admin header elements
+  document.getElementById('user-avatar').style.background = u.color;
+  document.getElementById('user-avatar').textContent = u.initials;
+  document.getElementById('user-name').textContent = u.name;
+  document.getElementById('user-role-lbl').textContent = u.role === 'hr' ? 'HR Manager' : 'Function Head';
+  document.getElementById('user-chip').style.display='flex';
+  document.getElementById('logout-btn').style.display='block';
+  document.getElementById('admin-nav').style.display='flex';
+  // Hide employee shell, show admin shell
+  document.getElementById('emp-shell').style.display='none';
+  document.getElementById('admin-shell').style.display='block';
+  // Navigate to role default
+  gv(RBAC[u.role].def);
+  startPoll(); // begin checking for new employee submissions every 20 s
+  toast(`Welcome, ${u.name}!`);
+}
+
+function doLogout(){
+  AUTH.user = null;
+  stopPoll();
+  // Reset form state
+  resetNF();
+  // Restore employee view
+  document.getElementById('user-chip').style.display='none';
+  document.getElementById('logout-btn').style.display='none';
+  document.getElementById('admin-nav').style.display='none';
+  document.getElementById('admin-shell').style.display='none';
+  document.getElementById('emp-shell').style.display='block';
+  renderEmpForm();
+}
+
+// ──────────────────────────────────────────────────
+// ADMIN NAVIGATION
+// ──────────────────────────────────────────────────
+function renderAdminNav(){
+  const role = AUTH.user?.role;
+  if(!role) return;
+  const allowed = RBAC[role].views;
+  const st = stats();
+  const badge = role==='function_head' ? st.pl1 : st.pl2;
+  document.getElementById('admin-nav').innerHTML = NAV
+    .filter(i=>allowed.includes(i.v))
+    .map(i=>`<button class="nav-btn ${S.view===i.v?'act':''}" onclick="gv('${i.v}')">${i.ico} ${i.lbl}${i.v==='approvals'&&badge>0?` (${badge})`:''}</button>`)
+    .join('');
+}
+
+function gv(v){
+  const role = AUTH.user?.role;
+  const allowed = RBAC[role]?.views || [];
+  if(!allowed.includes(v)) v = RBAC[role]?.def || v;
+  S.view = v;
+  renderAdminNav();
+  const st = stats();
+  const heads = {
+    dashboard: ['Recognition Overview',         'Q2 2026 · Altudo R&R Policy v5.0 · All Functions'],
+    nominate:  ['Submit a Nomination',           'Guided form with AI eligibility verification against policy'],
+    approvals: ['Nominations',                   role==='function_head'?`${st.pl1} pending your L1 review · full pipeline below`:`${st.pl2} awaiting HR final approval`],
+    awards:    ['Award Directory',               `${allAwds().length} total awards — Nomination, On-Spot &amp; Recognition`],
+    mine:      ['Nomination Tracker',            'All nominations with current approval status'],
+  };
+  const [t,s] = heads[v] || ['',''];
+  document.getElementById('ph-title').innerHTML = t;
+  document.getElementById('ph-sub').innerHTML   = s;
+  document.getElementById('ph-action').innerHTML = v==='dashboard'
+    ? `<div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:10px;color:var(--mut)">🔄 Auto-syncing every 20s</span>
+        <button class="btn btn-gh btn-sm" onclick="refreshFromStorage()">↻ Refresh</button>
+        <button class="btn btn-pri btn-sm" onclick="resetNF();gv('nominate')">📝 New Nomination</button>
+       </div>`
+    : (v==='approvals'||v==='mine')
+    ? `<button class="btn btn-gh btn-sm" onclick="refreshFromStorage()">↻ Refresh</button>`
+    : '';
+  const mc = document.getElementById('mc');
+  if(v==='dashboard')       rdash(mc);
+  else if(v==='nominate')   rnom(mc, true);
+  else if(v==='approvals')  rapp(mc);
+  else if(v==='awards')     rawds(mc);
+  else if(v==='mine')       rmine(mc);
+}
+
+// ──────────────────────────────────────────────────
+// EMPLOYEE FORM
+// ──────────────────────────────────────────────────
+function resetNF(){S.ns=2;S.atype='nomination';S.awd=null;S.fd={nm:'',em:'',gr:'',fn:'',tn:'',jt:'',im:'',nnm:'',nem:'',ngr:'',nfn:''};S.er=null;S.el=false;S.nd=false;}
+
+function renderEmpForm(){document.getElementById('emp-form-container').innerHTML='';rnom(document.getElementById('emp-form-container'),false);}
+
+function rnom(el, isAdmin){
+  if(S.nd){
+    const ref = genRef();
+    el.innerHTML=`<div class="success-card">
+      <div style="font-size:56px;margin-bottom:12px">🎉</div>
+      <div class="fw8" style="font-size:19px;margin-bottom:8px;color:var(--ok)">Nomination Submitted!</div>
+      <div class="c-mut fs12 mb12" style="max-width:360px;margin:0 auto 12px;line-height:1.6">
+        <strong>${esc(S.fd.nm)}</strong> has been nominated for the <strong>${esc(S.awd?.name||'')}</strong>.
+        ${S.atype==='nomination'?' It will be reviewed by the Function Head, then HR for final approval.':
+          ' It will be reviewed by Function Head, then HR.'}
+      </div>
+      <div class="ref-chip">${ref}</div>
+      <div class="c-mut fs11 mb16">Save this reference number for follow-up</div>
+      <button class="btn btn-ok" onclick="resetNF();${isAdmin?'gv(\'nominate\')':'renderEmpForm()'}">📝 Submit Another Nomination</button>
+    </div>`;
+    return;
+  }
+
+  const SN = ['Select Award','Award Info','Nomination Details','Submit'];
+  const prog = `<div class="steps mb16">
+    ${SN.map((s,i)=>`
+    <div style="display:flex;align-items:center;${i<SN.length-1?'flex:1':''}">
+      <div class="s-circle ${S.ns>i+2?'done':S.ns===i+2?'act':''}">${S.ns>i+2?'✓':i+1}</div>
+      <span class="s-lbl ${S.ns===i+2?'act':''}">${s}</span>
+    </div>
+    ${i<SN.length-1?`<div class="s-line ${S.ns>i+2?'done':''}"></div>`:''}`).join('')}
+  </div>`;
+
+  let body = '';
+  const back = (n) => `onclick="S.ns=${n};${isAdmin?'gv(\'nominate\')':'renderEmpForm()'}"`;
+
+  if(S.ns===1){body='';}
+  else if(S.ns===2){
+    const awds = AWARDS[S.atype]||[];
+    body=`
+    <div style="margin-bottom:16px">
+      <div class="fw7 fs15 mb4">Select Award</div>
+      <div class="c-mut fs12">${awds.length} awards available — click one to continue</div>
+    </div>
+    <div class="asel-grid" id="asel-grid">
+      ${awds.map(a=>`
+        <div class="asel-card ${S.awd?.id===a.id?'sel':''}" data-aid="${a.id}" data-adm="${isAdmin?1:0}">
+          <div style="display:flex;gap:9px;align-items:flex-start;pointer-events:none">
+            <span style="font-size:22px;flex-shrink:0;margin-top:1px">${a.ico}</span>
+            <div style="min-width:0">
+              <div class="fw7 fs12 mb4">${esc(a.name)}</div>
+              <div class="c-mut fs10 mb6" style="line-height:1.4">${esc(a.elig)}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                <span style="background:#EEF2FF;color:#4F46E5;border-radius:4px;padding:1px 6px;font-size:8px;font-weight:600">${esc(a.freq)}</span>
+                <span style="background:#F3F4F6;color:var(--mut);border-radius:4px;padding:1px 6px;font-size:8px;font-weight:600">${esc(a.count)}</span>
+              </div>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+    setTimeout(()=>{
+      const grid=document.getElementById('asel-grid');
+      if(grid) grid.addEventListener('click',e=>{
+        const card=e.target.closest('[data-aid]');
+        if(!card)return;
+        const aid=card.dataset.aid, adm=card.dataset.adm==='1';
+        S.awd=allAwds().find(x=>x.id===aid);
+        S.ns=3;
+        if(adm)gv('nominate'); else renderEmpForm();
+      });
+    },0);
+  }
+
+  else if(S.ns===3){
+    const awd=S.awd;
+    body=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:32px">${awd.ico}</span>
+          <div class="fw7" style="font-size:18px">${esc(awd.name)}</div>
+        </div>
+        <div class="c-mut fs12">${esc(awd.cat)} · ${esc(awd.freq)}</div>
+      </div>
+      <button class="btn btn-gh btn-sm" ${back(2)}>← Back</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px">
+      <div style="background:#F8FAFC;border-radius:10px;padding:14px">
+        <div class="c-mut fs10 fw7" style="letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Number of Awards</div>
+        <div class="fw7 fs14">${esc(awd.count)}</div>
+      </div>
+
+      <div style="background:#EEF2FF;border-radius:10px;padding:14px;grid-column:1/-1">
+        <div class="c-mut fs10 fw7" style="letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Eligibility</div>
+        <div class="fs12" style="line-height:1.6;color:#3730A3">${esc(awd.elig)}</div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:20px">
+      <div class="c-mut fs10 fw7" style="letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">Evaluation Criteria</div>
+      <div class="fs12" style="line-height:1.8;color:var(--txt)">
+        ${awd.crit.split('. ').filter(s=>s.trim()).map(s=>`<div style="display:flex;gap:8px;margin-bottom:6px"><span style="color:var(--pri);flex-shrink:0">•</span><span>${esc(s.trim().replace(/\.$/,'')+'.')}</span></div>`).join('')}
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-ok btn-lg" ${back(4)}>Proceed to Nominate →</button>
+    </div>`;
+  }
+
+  
+  else if(S.ns===4){body=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div><div class="fw7 fs15 mb8">Nomination Details</div>
+      <div style="display:flex;gap:7px;align-items:center"><span>${S.awd?.ico}</span><span class="fw7 fs13 c-gold">${esc(S.awd?.name)}</span></div></div>
+      <button class="btn btn-gh btn-sm" ${back(3)}>← Back</button>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ok-dk);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--ok-bg)">✍️ Nominator Details</div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="fg"><label class="fl">Your Full Name *</label><input class="inp" placeholder="e.g. Rahul Mehta" value="${esc(S.fd.nnm)}" oninput="S.fd.nnm=this.value"></div>
+      <div class="fg"><label class="fl">Your Email ID *</label><input class="inp" type="email" placeholder="yourname@altudo.co" value="${esc(S.fd.nem)}" oninput="S.fd.nem=this.value"></div>
+      <div class="fg"><label class="fl">Your Designation *</label>
+        <select class="sel" onchange="S.fd.ngr=this.value"><option value="">Select designation...</option>${GRADES.map(g=>`<option ${S.fd.ngr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">Your Function / Team *</label>
+        <select class="sel" onchange="S.fd.nfn=this.value"><option value="">Select your function...</option>${FNS.map(f=>`<option ${S.fd.nfn===f?'selected':''} value="${f}">${f}</option>`).join('')}</select></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--pri);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--pri-bg)">👤 Nominee Details</div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="fg"><label class="fl">Full Name *</label><input class="inp" placeholder="e.g. Priya Sharma" value="${esc(S.fd.nm)}" oninput="S.fd.nm=this.value"></div>
+      <div class="fg"><label class="fl">Email ID</label><input class="inp" type="email" placeholder="nominee@altudo.co" value="${esc(S.fd.em)}" oninput="S.fd.em=this.value"></div>
+      <div class="fg"><label class="fl">Designation *</label>
+        <select class="sel" onchange="S.fd.gr=this.value"><option value="">Select grade...</option>${GRADES.map(g=>`<option ${S.fd.gr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">Function / Team *</label>
+        <select class="sel" onchange="S.fd.fn=this.value"><option value="">Select function...</option>${FNS.map(f=>`<option ${S.fd.fn===f?'selected':''} value="${f}">${f}</option>`).join('')}</select></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--line)">📝 A Brief Description to Support the Nomination</div>
+    <div class="fg" style="margin-bottom:10px">
+      <label class="fl">Description * <span style="text-transform:none;letter-spacing:0;font-weight:400" class="c-mut">— ${S.fd.jt.length} chars (min. 150 recommended)</span></label>
+      <textarea class="txa" style="min-height:130px" placeholder="Briefly describe the specific achievements, impact, and behaviours that support this nomination..." oninput="S.fd.jt=this.value">${esc(S.fd.jt)}</textarea>
+    </div>
+    <div class="fg" style="margin-bottom:14px"><label class="fl">Evidence / Key Impact (optional)</label>
+      <input class="inp" placeholder="e.g. Client appreciation email, deployment time reduced by 60%, CSAT 4.8..." value="${esc(S.fd.im)}" oninput="S.fd.im=this.value"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-pri" onclick="toStep5('${isAdmin}')">Next: Review &amp; Submit →</button>
+    </div>`;}
+
+  
+  else if(S.ns===5){
+    const awd=S.awd;
+    body=`
+    <div style="background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px">
+      <div class="fw7 mb12" style="font-size:15px">📋 Nomination Summary</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div><div class="c-mut fs11 mb2">AWARD</div><div class="fw7" style="color:var(--pri)">${esc(awd.name)}</div><div class="fs12 c-mut">${esc(awd.cat)} · ${esc(awd.freq)}</div></div>
+        <div><div class="c-mut fs11 mb2">NOMINATED BY</div><div class="fw7">${esc(S.fd.nnm)}</div><div class="fs12 c-mut">${esc(S.fd.ngr)} · ${esc(S.fd.nfn)}</div><div class="fs11 c-mut">${esc(S.fd.nem)}</div></div>
+        <div><div class="c-mut fs11 mb2">NOMINEE</div><div class="fw7">${esc(S.fd.nm)}</div><div class="fs12 c-mut">${esc(S.fd.gr)} · ${esc(S.fd.fn)}</div></div>
+
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--line)">
+        <div class="c-mut fs11 mb4">JUSTIFICATION</div>
+        <div class="fs12" style="line-height:1.6">${esc(S.fd.jt.substring(0,280))}${S.fd.jt.length>280?'...':''}</div>
+      </div>
+    </div>
+    <div style="background:var(--ok-bg);border:1px solid rgba(5,150,105,.25);border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:12px;color:var(--ok-dk)">
+      ✅ Ready to submit. Function Head will review first, then HR confirms.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-gh" ${back(4)}>← Edit Details</button>
+      <button class="btn btn-ok btn-lg" onclick="doSubmit('${isAdmin}')">🚀 Submit Nomination</button>
+    </div>`;}
+
+
+  el.innerHTML = `<div style="background:#fff;border:1px solid var(--line);border-radius:var(--rad);padding:22px 24px;box-shadow:var(--sh);">${prog}${body}</div>`;
+}
+
+function toStep5(isAdmin){
+  if(!S.fd.nm||!S.fd.gr||!S.fd.fn||!S.fd.jt||!S.fd.nnm||!S.fd.nem||!S.fd.ngr||!S.fd.nfn){toast('Fill in all required fields first.','w');return;}
+  S.ns=5;S.er=null;
+  if(isAdmin==='true')gv('nominate'); else renderEmpForm();
+}
+
+async function doElig(isAdmin){
+  if(!S.awd)return;
+  S.el=true;S.er=null;
+  if(isAdmin==='true')gv('nominate'); else renderEmpForm();
+  const role = AUTH.user?.role || 'employee';
+  const p = `You are an HR policy checker for Altudo's R&R platform.
+AWARD: ${S.awd.name} | Type: ${S.atype} | Eligibility: ${S.awd.elig} | Authority: ${S.awd.auth}
+NOMINEE: ${S.fd.nm} | Grade: ${S.fd.gr} | Function: ${S.fd.fn} | Tenure: ${S.fd.tn}mo
+NOMINATOR ROLE: ${role==='function_head'?'Function Head':role==='hr'?'HR Manager':'Employee/Lead'}
+JUSTIFICATION (${S.fd.jt.length} chars): "${S.fd.jt.substring(0,300)}"
+Respond ONLY in this JSON (no markdown):
+{"eligible":true,"verdict":"Max 12 words","score":85,"checks":[{"label":"Grade & Role Eligibility","pass":true,"note":"Max 12 words"},{"label":"Function/Team Eligibility","pass":true,"note":"Max 12 words"},{"label":"Nominator Authority","pass":true,"note":"Max 12 words"},{"label":"Justification Quality","pass":true,"note":"Max 12 words"}],"tip":"Optional max 40 words"}`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:p}]})});
+    const d=await r.json();
+    S.er=JSON.parse((d.content?.find(b=>b.type==='text')?.text||'{}').replace(/```json|```/g,'').trim());
+  }catch{S.er={eligible:null,verdict:'Verification service unavailable',score:0,checks:[],tip:'Please contact HR for manual eligibility confirmation.'};}
+  S.el=false;
+  if(isAdmin==='true')gv('nominate'); else renderEmpForm();
+}
+
+async function doSubmit(isAdmin){
+  const ns='pending_l1';
+  const nomRole = AUTH.user ? AUTH.user.name : 'Employee (Self-service)';
+  const nomRoleLbl = AUTH.user ? (AUTH.user.role==='hr'?'HR Manager':'Function Head') : 'Employee';
+  const newNom = {id:String(Date.now()),award:S.awd.name,type:S.atype,nominee:S.fd.nm,role:S.fd.gr,fn:S.fd.fn,
+    nominator:S.fd.nnm||nomRole,nRole:S.fd.ngr||nomRoleLbl,nem:S.fd.nem||'',status:ns,q:'Q2 2026',cat:S.awd.cat,
+    justif:S.fd.jt,sub:new Date().toISOString().split('T')[0],l1:'',l2:''};
+  noms.unshift(newNom);          // optimistic local update — UI responds instantly
+  addNomToSheet(newNom);         // async write to Excel via PA
+  // ── Email notifications ──────────────────────────────────────────────────
+  const ref = newNom.id;
+  const subjectNominator = `Nomination Submitted — ${newNom.award} for ${newNom.nominee}`;
+  const msgNominator = `Your nomination has been submitted successfully.\n\nAward: ${newNom.award}\nNominee: ${newNom.nominee} (${newNom.role} · ${newNom.fn})\nReference ID: ${ref}\n\nYour nomination is now pending Function Head review. You will be notified once a decision is made.\n\nAltudo R&R Platform`;
+  sendMail(S.fd.nem, S.fd.nnm, subjectNominator, msgNominator);
+  const fhEmail = MAIL.FH_EMAIL || (AUTH.user?.role==='function_head' ? '' : '');
+  if(fhEmail){
+    const msgFH = `A new nomination requires your review.\n\nAward: ${newNom.award}\nNominee: ${newNom.nominee} (${newNom.role} · ${newNom.fn})\nNominated by: ${newNom.nominator} (${newNom.nRole})\nReference ID: ${ref}\n\nPlease log in to the Altudo R&R Platform to review and approve or return this nomination.\n\nAltudo R&R Platform`;
+    sendMail(fhEmail, 'Function Head', `New Nomination for Review — ${newNom.award}`, msgFH);
+  }
+  S.nd=true;
+  toast(`Nomination for ${S.fd.nm} submitted successfully!`);
+  if(isAdmin==='true')gv('nominate'); else renderEmpForm();
+}
+
+// ──────────────────────────────────────────────────
+// DASHBOARD (HR only)
+// ──────────────────────────────────────────────────
+function rdash(el){
+  const st=stats();
+  [lineChart,donutChart,barChart].forEach(c=>c&&c.destroy());
+  lineChart=donutChart=barChart=null;
+  const _dp = PA.READY ? `<div style="background:#F8FAFC;border:1px solid var(--line);border-radius:var(--rad);padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:12px;color:var(--mut);flex:1">🔌 Excel Sync via Power Automate</span><div id="diag-out" style="font-size:11px;flex:2"></div><button class="btn btn-gh btn-sm" onclick="runDiagnostics()">🩺 Test Connection</button></div>` : '';
+  el.innerHTML=_dp+gsSetupBanner()+`
+  <div class="g4 mb20">
+    ${[['📝',st.tot,'Nominations This Quarter','var(--pri)','3px solid var(--pri)'],['⏳',st.pl1,'Pending L1 Review','var(--warn)','3px solid var(--warn)'],['🔵',st.pl2,'Pending HR Review','#2563EB','3px solid #2563EB'],['🏆',st.app,'Awarded This Quarter','var(--ok)','3px solid var(--ok)']].map(([ico,v,lbl,c,bl])=>`
+    <div class="card" style="border-left:${bl}">
+      <div class="stat"><div class="stat-ico">${ico}</div><div><div class="stat-val" style="color:${c}">${v}</div><div class="stat-lbl">${lbl}</div></div></div>
+    </div>`).join('')}
+  </div>
+  <div class="g-ld mb12">
+    <div class="card"><div class="card-t">Monthly Nomination &amp; Approval Trend</div><div style="position:relative;height:200px"><canvas id="lc"></canvas></div></div>
+    <div class="card">
+      <div class="card-t">Award Type Distribution</div>
+      <div style="position:relative;height:150px"><canvas id="dc"></canvas></div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+        ${[['Nomination Awards',28,'var(--pri)'],['On-Spot Awards',18,'var(--gold)'],['Recognition Badges',12,'var(--ok)']].map(([l,v,c])=>`
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+          <div style="width:9px;height:9px;border-radius:2px;background:${c};flex-shrink:0"></div>
+          <span class="c-mut" style="flex:1">${l}</span><span class="fw7">${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="g-cp mb20">
+    <div class="card"><div class="card-t">Nominations by Category</div><div style="position:relative;height:175px"><canvas id="bc"></canvas></div></div>
+    <div class="card">
+      <div class="card-t">Approval Pipeline — Q2 2026</div>
+      ${[['Submitted',st.tot,'var(--pri)','Total nominations'],['L1 Review',st.pl1,'var(--warn)','With Function Head'],['HR Review',st.pl2,'#2563EB','Awaiting HR'],['Winners',st.app,'var(--ok)','Confirmed &amp; awarded']].map(([lbl,cnt,c,sub],i,arr)=>`
+      <div class="pipe-row">
+        <div class="pipe-dot" style="background:${c}18;color:${c};border:1.5px solid ${c}35">${cnt}</div>
+        <div style="flex:1"><div class="fw7 fs12">${lbl}</div><div class="c-mut fs10">${sub}</div></div>
+        <div style="min-width:80px"><div style="height:4px;border-radius:2px;background:#F1F5F9"><div style="height:100%;border-radius:2px;background:${c};width:${st.tot>0?Math.max(5,Math.round(cnt/st.tot*100)):0}%"></div></div></div>
+      </div>${i<arr.length-1?'<div class="pipe-connector"></div>':''}`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0">Recent Nominations</div>
+      <button class="btn btn-gh btn-sm" onclick="gv('approvals')">View All →</button>
+    </div>
+    <table class="dtbl"><thead><tr><th>Nominee</th><th>Award</th><th>Nominator</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>${noms.slice(0,6).map(n=>`<tr onclick="openDetail('${n.id}')">
+      <td><div class="fw7 fs12">${esc(n.nominee)}</div><div class="c-mut fs10">${esc(n.role)} · ${esc(n.fn)}</div></td>
+      <td><div class="fs12">${esc(n.award)}</div><span class="cat-bdg">${esc(n.cat)}</span></td>
+      <td class="c-mut fs12">${esc(n.nominator)}</td>
+      <td class="c-mut fs11">${esc(n.sub)}</td>
+      <td>${bdg(n.status)}</td>
+    </tr>`).join('')}</tbody></table>
+  </div>`;
+  setTimeout(()=>{
+    const gl={color:'rgba(0,0,0,.04)'}, tc={color:'#9CA3AF',font:{size:10}};
+    const lc=document.getElementById('lc');
+    if(lc)lineChart=new Chart(lc,{type:'line',data:{labels:MO.map(d=>d.m),datasets:[
+      {label:'Nominations',data:MO.map(d=>d.n),borderColor:'#4B70F5',backgroundColor:'rgba(75,112,245,.07)',tension:.4,pointRadius:4,borderWidth:2,fill:true},
+      {label:'Approved',data:MO.map(d=>d.a),borderColor:'#059669',backgroundColor:'rgba(5,150,105,.05)',tension:.4,pointRadius:4,borderWidth:2,fill:true},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6B7A99',boxWidth:11,font:{size:11}}}},scales:{x:{ticks:tc,grid:gl},y:{ticks:tc,grid:gl}}}});
+    const dc=document.getElementById('dc');
+    if(dc)donutChart=new Chart(dc,{type:'doughnut',data:{labels:['Nomination','On-Spot','Recognition'],datasets:[{data:[28,18,12],backgroundColor:['#4B70F5','#B87817','#059669'],borderWidth:2,borderColor:'#fff',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+    const bc=document.getElementById('bc');
+    if(bc)barChart=new Chart(bc,{type:'bar',data:{labels:CD.map(d=>d.n),datasets:[{label:'Nominations',data:CD.map(d=>d.v),backgroundColor:'rgba(75,112,245,.12)',borderColor:'#4B70F5',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:tc,grid:gl},y:{ticks:{...tc,font:{size:9}},grid:{display:false}}}}});
+  },50);
+}
+
+function openDetail(id){
+  const n=noms.find(x=>String(x.id)===String(id));if(!n)return;
+  openMod(`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+    <div><div class="fw8 c-gold" style="font-size:15px">🏆 ${esc(n.award)}</div><div style="margin-top:6px">${bdg(n.status)}</div></div>
+    <button onclick="closeMod()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--mut)">×</button>
+  </div>
+  <div class="g2 mb12">
+    <div><div class="fl">Nominee</div><div class="fw7 fs13">${esc(n.nominee)}</div><div class="c-mut fs11">${esc(n.role)} · ${esc(n.fn)}</div></div>
+    <div><div class="fl">Nominated By</div><div class="fs13">${esc(n.nominator)}</div><div class="c-mut fs11">${esc(n.nRole)}</div></div>
+    <div><div class="fl">Quarter</div><div class="fs13">${esc(n.q)}</div></div>
+    <div><div class="fl">Submitted</div><div class="fs13">${esc(n.sub)}</div></div>
+  </div>
+  <div class="justif mb12">${esc(n.justif)}</div>
+  ${n.l1&&!n.l1.includes('N/A')&&!n.l1.includes('Recognition')?`<div class="cmtbox"><strong class="c-ok">L1 Comment:</strong> ${esc(n.l1)}</div>`:''}
+  ${n.l2&&!n.l2.includes('N/A')&&!n.l2.includes('Recognition')?`<div class="cmtbox mt8"><strong class="c-ok">HR Comment:</strong> ${esc(n.l2)}</div>`:''}`);
+}
+
+// ──────────────────────────────────────────────────
+// APPROVALS / NOMINATIONS
+// ──────────────────────────────────────────────────
+function rapp(el){
+  const isFH = AUTH.user?.role==='function_head';
+  const ts = isFH ? 'pending_l1' : 'pending_l2';
+  const queue = noms.filter(n=>n.status===ts);
+  const qc = queue.length, qColor = isFH?'var(--warn)':'#2563EB';
+  el.innerHTML=gsSetupBanner()+`
+  <div class="q-banner">
+    <div style="font-size:22px">${isFH?'🏢':'⚙️'}</div>
+    <div style="flex:1">
+      <div class="fw7 fs13">${isFH?'L1 Review Queue':'L2 Review Queue — HR Final Approval'}</div>
+      <div class="c-mut fs11 mt8">${qc} nomination${qc!==1?'s':''} awaiting your action</div>
+    </div>
+    <div style="background:${qColor}15;color:${qColor};border-radius:20px;padding:4px 14px;font-weight:800;font-size:14px;border:1px solid ${qColor}30">${qc}</div>
+  </div>
+  ${queue.length===0
+    ?`<div style="text-align:center;padding:36px;background:#fff;border-radius:var(--rad);border:1.5px dashed var(--line);margin-bottom:20px">
+        <div style="font-size:38px;margin-bottom:10px">✅</div>
+        <div class="fw7 mb8">Queue is clear!</div>
+        <div class="c-mut fs12">No nominations pending your review.</div>
+      </div>`
+    :queue.map(n=>`<div class="acard">
+      <div class="acard-hd">
+        <div class="acard-body">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
+            <span class="fw8 c-gold fs13">🏆 ${esc(n.award)}</span>${bdg(n.status)}
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
+            <span class="fw7 fs13">${esc(n.nominee)}</span><span class="c-mut fs11">· ${esc(n.role)} · ${esc(n.fn)}</span>
+            <span class="cat-bdg">${esc(n.cat)}</span>
+          </div>
+          <div class="c-mut fs10 mb10">Nominated by: ${esc(n.nominator)} (${esc(n.nRole)}) · ${esc(n.sub)}</div>
+          <div class="justif">${esc(n.justif)}</div>
+          ${!isFH&&n.l1&&!n.l1.includes('N/A')?`<div class="cmtbox"><strong class="c-ok">L1 Comment:</strong> ${esc(n.l1)}</div>`:''}
+        </div>
+        <div class="acard-actions">
+          <textarea class="txa" id="cmt-${n.id}" style="min-height:65px;font-size:11px" placeholder="Add comment (required to return)..."></textarea>
+          <button class="btn btn-ok btn-sm" onclick="doApp('${n.id}',${isFH?1:2})">${isFH?'✅ Approve → Forward to HR':'✅ Confirm Winner'}</button>
+          <button class="btn btn-warn btn-sm" onclick="doRet('${n.id}',${isFH?1:2})">↩ Return with Feedback</button>
+          <button class="btn btn-err btn-sm" onclick="doReject('${n.id}',${isFH?1:2})">✕ Reject</button>
+        </div>
+      </div>
+    </div>`).join('')}
+  <div class="mt20">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="slbl">${isFH?'All Nominations — Pipeline Overview':'Full Nomination Register — Audit Log'}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="fl-fn" class="sel" style="font-size:11px;padding:5px 10px;min-width:140px" onchange="renderAuditTable(isFH)">
+          <option value="">All Functions</option>
+          ${[...new Set(noms.map(n=>n.fn).filter(Boolean))].sort().map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('')}
+        </select>
+        <select id="fl-gr" class="sel" style="font-size:11px;padding:5px 10px;min-width:150px" onchange="renderAuditTable(isFH)">
+          <option value="">All Designations</option>
+          ${[...new Set(noms.map(n=>n.role).filter(Boolean))].sort().map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('')}
+        </select>
+        <select id="fl-st" class="sel" style="font-size:11px;padding:5px 10px;min-width:130px" onchange="renderAuditTable(isFH)">
+          <option value="">All Statuses</option>
+          <option value="pending_l1">Pending L1</option>
+          <option value="pending_l2">Pending HR</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button class="btn btn-gh" style="font-size:11px;padding:5px 12px;display:flex;align-items:center;gap:5px" onclick="downloadNoms()">⬇ Download Excel</button>
+        <span class="c-mut fs11" id="audit-count">${noms.length} total</span>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden" id="audit-tbl-wrap">
+      <table class="dtbl">
+        <thead><tr><th>Nominee</th><th>Designation</th><th>Function</th><th>Award</th><th>Nominator</th><th>Date</th><th>Status</th>${!isFH?'<th>L1 Comment</th>':''}</tr></thead>
+        <tbody id="audit-tbody">${noms.map(n=>`<tr onclick="openDetail('${n.id}')">
+          <td class="fw7 fs11">${esc(n.nominee)}</td>
+          <td class="c-mut fs11">${esc(n.role)}</td>
+          <td class="c-mut fs11">${esc(n.fn)}</td>
+          <td style="color:var(--gold);font-size:11px;font-weight:600">${esc(n.award)}</td>
+          <td class="c-mut fs11">${esc(n.nominator)}</td>
+          <td class="c-mut" style="font-size:10px">${esc(n.sub)}</td>
+          <td>${bdg(n.status)}</td>
+          ${!isFH?`<td class="c-mut" style="font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.l1?esc(n.l1.substring(0,55))+'…':'—'}</td>`:''}
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+  setTimeout(()=>{if(typeof renderAuditTable==='function')renderAuditTable(false);},0);
+}
+function renderAuditTable(isFH){
+  const fn  = document.getElementById('fl-fn')?.value  || '';
+  const gr  = document.getElementById('fl-gr')?.value  || '';
+  const st  = document.getElementById('fl-st')?.value  || '';
+  const filtered = noms.filter(n=>
+    (!fn || n.fn   === fn) &&
+    (!gr || n.role === gr) &&
+    (!st || n.status === st)
+  );
+  const tbody = document.getElementById('audit-tbody');
+  const count = document.getElementById('audit-count');
+  if(count) count.textContent = filtered.length + ' total';
+  if(!tbody) return;
+  tbody.innerHTML = filtered.map(n=>`<tr onclick="openDetail('${n.id}')">
+    <td class="fw7 fs11">${esc(n.nominee)}</td>
+    <td class="c-mut fs11">${esc(n.role)}</td>
+    <td class="c-mut fs11">${esc(n.fn)}</td>
+    <td style="color:var(--gold);font-size:11px;font-weight:600">${esc(n.award)}</td>
+    <td class="c-mut fs11">${esc(n.nominator)}</td>
+    <td class="c-mut" style="font-size:10px">${esc(n.sub)}</td>
+    <td>${bdg(n.status)}</td>
+    ${!isFH?`<td class="c-mut" style="font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.l1?esc(n.l1.substring(0,55))+'…':'—'}</td>`:''}
+  </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--mut)">No nominations match the selected filters.</td></tr>';
+}
+
+function downloadNoms(){
+  const fn = document.getElementById('fl-fn')?.value || '';
+  const gr = document.getElementById('fl-gr')?.value || '';
+  const st = document.getElementById('fl-st')?.value || '';
+  const filtered = noms.filter(n=>
+    (!fn || n.fn === fn) &&
+    (!gr || n.role === gr) &&
+    (!st || n.status === st)
+  );
+  const headers = ['ID','Award','Nominee','Designation','Function','Nominator','Nominator Role','Status','Quarter','Category','Description','Date Submitted','L1 Comment','L2 Comment'];
+  const rows = filtered.map(n=>[
+    n.id, n.award, n.nominee, n.role, n.fn,
+    n.nominator, n.nRole,
+    n.status, n.q, n.cat,
+    (n.justif||'').replace(/,/g,' ').replace(/\n/g,' '),
+    n.sub, (n.l1||'').replace(/,/g,' '), (n.l2||'').replace(/,/g,' ')
+  ]);
+  const esc2=v=>{const s=String(v||'');return '"'+s.replace(/"/g,'""')+'"';};
+  const csv=[headers,...rows].map(r=>r.map(esc2).join(',')).join('\n')
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Altudo_RnR_Nominations_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Downloaded — open in Excel and it will format automatically.');
+}
+
+async function doApp(id,lv){
+  const c=document.getElementById(`cmt-${id}`)?.value||'';
+  noms=noms.map(n=>String(n.id)!==String(id)?n:lv===1
+    ?{...n,status:'pending_l2',l1:c||`Approved by ${AUTH.user?.name||'Function Head'}.`}
+    :{...n,status:'approved',l2:c||`Approved by ${AUTH.user?.name||'HR'}.`});
+  updateNomInSheet(id);          // async write to Excel via PA
+  // ── Email notifications ──────────────────────────────────────────────────
+  const _n = noms.find(x=>String(x.id)===String(id));
+  if(_n && lv===1){
+    const msgHR = `A nomination has been approved by the Function Head and requires your final review.\n\nAward: ${_n.award}\nNominee: ${_n.nominee} (${_n.role} · ${_n.fn})\nNominated by: ${_n.nominator}\nFunction Head Comment: ${c||'Approved'}\n\nPlease log in to the Altudo R&R Platform to confirm the winner.\n\nAltudo R&R Platform`;
+    sendMail(MAIL.HR_EMAIL, 'HR Team', `Nomination Approved — Action Required: ${_n.award} for ${_n.nominee}`, msgHR);
+    // Also notify nominator
+    const msgNom = `Good news! Your nomination for ${_n.nominee} for the ${_n.award} award has been approved by the Function Head. It is now with HR for final confirmation.\n\nAltudo R&R Platform`;
+    if(_n.nominator) sendMail('', _n.nominator, `Nomination Update — ${_n.award}`, msgNom);
+  }
+  toast(lv===1?'✅ Forwarded to HR for final approval.':'🎉 Nomination approved! Winner confirmed.');
+  gv('approvals');
+}
+async function doRet(id,lv){
+  const c=document.getElementById(`cmt-${id}`)?.value?.trim()||'';
+  if(!c){toast('Add a return reason in the comment box first.','w');return;}
+  noms=noms.map(n=>String(n.id)!==String(id)?n:{...n,status:'rejected',[lv===1?'l1':'l2']:c});
+  updateNomInSheet(id);          // async write to Excel via PA
+  // ── Email notification ───────────────────────────────────────────────────
+  const _nr = noms.find(x=>String(x.id)===String(id));
+  if(_nr){
+    const reviewer = lv===1 ? 'Function Head' : 'HR';
+    const msgRet = `Your nomination has been returned with feedback.\n\nAward: ${_nr.award}\nNominee: ${_nr.nominee}\nReviewed by: ${reviewer}\nFeedback: ${c}\n\nPlease review the feedback and resubmit your nomination with the suggested improvements.\n\nAltudo R&R Platform`;
+    if(_nr?.nem) sendMail(_nr.nem, `Nomination Returned with Feedback — ${_nr.award}`, msgRet);
+  }
+  toast('↩ Nomination returned with feedback.','w');gv('approvals');
+}
+
+async function doReject(id,lv){
+  const c=document.getElementById(`cmt-${id}`)?.value?.trim()||'';
+  if(!c){toast('Add a rejection reason in the comment box first.','w');return;}
+  noms=noms.map(n=>String(n.id)!==String(id)?n:{...n,status:'rejected',[lv===1?'l1':'l2']:`Rejected: ${c}`});
+  updateNomInSheet(id);
+  const _nr=noms.find(x=>String(x.id)===String(id));
+  if(_nr?.nem){
+    const msgRej=`Your nomination has been rejected.\n\nAward: ${_nr.award}\nNominee: ${_nr.nominee}\nRejected by: ${lv===1?'Function Head':'HR'}\nReason: ${c}\n\nAltudo R&R Platform`;
+    sendMail(_nr.nem,`Nomination Rejected — ${_nr.award}`,msgRej);
+  }
+  toast('✕ Nomination rejected.','e');gv('approvals');
+}
+
+// ──────────────────────────────────────────────────
+// AWARD DIRECTORY
+// ──────────────────────────────────────────────────
+function rawds(el){
+  const all=allAwds();
+  const filt=all.filter(a=>(S.af==='all'||a.type===S.af)&&(S.as===''||[a.name,a.cat,a.elig].join(' ').toLowerCase().includes(S.as.toLowerCase())));
+  el.innerHTML=`
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      ${[['all','All Awards',all.length],['nomination','Nomination',AWARDS.nomination.length]].map(([id,lbl,cnt])=>`
+      <button onclick="S.af='${id}';rawds(document.getElementById('mc'))" style="background:${S.af===id?'var(--pri)':'#fff'};color:${S.af===id?'#fff':'var(--mut)'};border:1.5px solid ${S.af===id?'var(--pri)':'var(--line)'};border-radius:7px;padding:5px 12px;cursor:pointer;font-weight:600;font-size:11px;font-family:inherit">${lbl} (${cnt})</button>`).join('')}
+    </div>
+    <input class="inp" style="max-width:185px;margin-left:auto;font-size:11px" placeholder="🔍 Search..." value="${esc(S.as)}" oninput="S.as=this.value;rawds(document.getElementById('mc'))">
+  </div>
+  <div class="g3">${filt.length===0?`<div class="c-mut fs12" style="grid-column:1/-1;text-align:center;padding:40px 0">No awards match your search.</div>`:
+  filt.map(a=>`<div class="dir-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px">
+      <span style="font-size:22px">${a.ico}</span>
+      <span style="background:${tcol(a.type)}15;color:${tcol(a.type)};border-radius:20px;padding:2px 9px;font-size:8px;font-weight:700;border:1px solid ${tcol(a.type)}25">${tlbl(a.type)}</span>
+    </div>
+    <div class="fw7 fs12 mb8">${esc(a.name)}</div>
+    <div class="c-mut fs10 mb10" style="line-height:1.4">${esc(a.elig)}</div>
+    <div class="divider"></div>
+    <div class="g2" style="gap:5px;font-size:10px;margin-bottom:8px">
+      <div><div class="fl" style="margin-bottom:2px">Category</div><div class="c-mut">${esc(a.cat)}</div></div>
+      <div><div class="fl" style="margin-bottom:2px">Frequency</div><div class="c-mut">${esc(a.freq)}</div></div>
+      <div><div class="fl" style="margin-bottom:2px">Count</div><div class="c-mut">${esc(a.count)}</div></div>
+      <div><div class="fl" style="margin-bottom:2px">Points</div><div style="color:</div></div>
+    </div>
+    <div class="fl" style="margin-bottom:2px">Nomination Authority</div>
+    <div class="c-mut fs10">${esc(a.auth)}</div>
+  </div>`).join('')}</div>`;
+}
+
+// ──────────────────────────────────────────────────
+// MY NOMINATIONS / TRACKER
+// ──────────────────────────────────────────────────
+function rmine(el){
+  el.innerHTML=`<div class="fw7 mb16 fs14">All Nominations — Status Tracker</div>
+  ${noms.slice(0,9).map(n=>{
+    const steps=[{l:'Submitted',d:true,ico:'📝'},{l:'L1 Review',d:['pending_l2','approved','rejected'].includes(n.status)||n.type!=='nomination',ico:'🏢',sk:n.type!=='nomination'},{l:'HR Review',d:n.status==='approved',ico:'⚙️'},{l:'Awarded',d:n.status==='approved',ico:'🏆'}];
+    return`<div class="card mb12">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><div class="fw8 c-gold fs13">🏆 ${esc(n.award)}</div><div class="c-mut fs11 mt8">${esc(n.nominee)} · by ${esc(n.nominator)} · ${esc(n.sub)}</div></div>
+        ${bdg(n.status)}
+      </div>
+      <div class="tl">
+        ${steps.map((s,i,arr)=>`<div class="tl-step"><div class="tl-circle" style="background:${s.d?'var(--ok-bg)':'#F3F4F6'}">${s.ico}</div><div class="tl-lbl" style="color:${s.d?'var(--ok)':'var(--mut)'}">${s.l}</div></div>${i<arr.length-1?`<div class="tl-line" style="background:${s.d?'var(--ok)':'var(--line)'}"></div>`:''}`).join('')}
+      </div>
+      ${n.l1&&!n.l1.includes('N/A')&&!n.l1.includes('Recognition')?`<div class="cmtbox ${n.status==='rejected'?'cmtbox-warn':''} mt10"><strong style="color:${n.status==='rejected'?'var(--err)':'var(--ok)'}">L1:</strong> ${esc(n.l1)}</div>`:''}
+      ${n.l2&&!n.l2.includes('N/A')&&!n.l2.includes('Recognition')?`<div class="cmtbox mt8"><strong class="c-ok">HR:</strong> ${esc(n.l2)}</div>`:''}
+    </div>`;
+  }).join('')}`;
+}
+
+// ──────────────────────────────────────────────────
+// INIT — load shared nominations, then show employee form
+// ──────────────────────────────────────────────────
+async function runDiagnostics(){
+  const el=document.getElementById('diag-out');if(!el)return;
+  el.innerHTML='<span style="color:var(--mut)">🔄 Testing...</span>';
+  if(!paConfigured()){el.innerHTML='<span style="color:var(--err)">❌ PA not configured</span>';return;}
+  try{
+    const d=await paCall({action:'get',data:{}});
+    if(d&&d.nominations!==undefined) el.innerHTML=`<span style="color:var(--ok)">✅ Connected — ${d.nominations.length} rows in Excel</span>`;
+    else if(d&&d.error) el.innerHTML=`<span style="color:var(--warn)">⚠️ Script error: ${d.error}</span>`;
+  }catch(e){el.innerHTML=`<span style="color:var(--err)">❌ ${e.message.slice(0,120)}</span>`;}
+}
+
+init();
+</script>
+</body>
+</html>
