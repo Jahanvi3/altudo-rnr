@@ -374,6 +374,7 @@ const ADMIN_USERS = {
   'ayushi.taneja@altudo.co':   { pw:'Ayushi@2026',  role:'function_head', lvl:1, name:'Ayushi Taneja',   initials:'AT', color:'#7C3AED' },
   'rajat.babbar@altudo.co':    { pw:'Rajat@2026',   role:'hr',            lvl:3, name:'Rajat Babbar',    initials:'RB', color:'#059669' },
   'jahanvi.batra@altudo.co':   { pw:'Jahanvi@2026', role:'hr',            lvl:2, name:'Jahanvi Batra',   initials:'JB', color:'#0369A1' },
+  'nipsy.jhamb@altudo.co':     { pw:'Nipsy@2026',   role:'hr',            lvl:2, name:'Nipsy Jhamb',     initials:'NJ', color:'#DB2777' },
   'sathish.balakrishnan@altudo.co': { pw:'Sathish@2026', role:'l3',       lvl:3, name:'Sathish Balakrishnan', initials:'SB', color:'#B45309' },
 };
 
@@ -1000,6 +1001,7 @@ async function loadNoms() {
     const d = await paCall({ action: 'get', data: {} });
     if (d && Array.isArray(d.nominations) && d.nominations.length > 0) {
       noms = d.nominations;
+      applyLocalEdits();   // keep approver edits from being reverted by the poll
       await saveNomsToStorage();
       return true;
     }
@@ -1050,6 +1052,12 @@ async function updateNomInSheet(id, event='', comment='') {
         l2: nom.l2 || '',
         l3: nom.l3 || '',
         fn: nom.fn || '',
+        // editable detail fields — carried so the backend can persist approver edits
+        nominee: nom.nominee || '',
+        role:    nom.role    || '',
+        cat:     nom.cat     || '',
+        justif:  nom.justif  || '',
+        award:   nom.award   || '',
         // email context — script generates HTML and PA sends via Outlook
         _event:          event,
         _comment:        comment,
@@ -1077,6 +1085,12 @@ async function updateNomInSheet(id, event='', comment='') {
 // LOCAL STORAGE FALLBACK — uses artifact storage when available, localStorage otherwise
 // ══════════════════════════════════════════════════════════════════════════════
 const STORE_KEY = 'altudo-rnr-noms-v1';
+// Persistent overlay of approver edits (nominee/designation/function/category/justification).
+// These fields are NOT round-tripped by the Power Automate "update" action, so without this
+// overlay the 12s background poll (loadNoms) would overwrite in-memory noms with the stale
+// server copy and silently revert any edit. The overlay is re-applied after every load.
+const EDIT_KEY = 'altudo-rnr-edits-v1';
+let LOCAL_EDITS = {};   // { "<id>": { nominee, role, fn, cat, justif } }
 const HAS_ARTIFACT_STORE = typeof window !== 'undefined' && window.storage && typeof window.storage.set === 'function';
 
 // In-memory fallback store — works in all environments including file:// and tracking-prevention mode
@@ -1115,6 +1129,7 @@ async function loadNomsFromStorage() {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         noms = parsed;
+        applyLocalEdits();   // keep approver edits on top of cached data
         console.log('[Storage] ✅ Loaded', parsed.length, 'nominations from local store');
         return true;
       }
@@ -1123,6 +1138,33 @@ async function loadNomsFromStorage() {
   return false;
 }
 
+// ── APPROVER EDIT OVERLAY ──────────────────────────────────────────────────────
+// Re-apply locally saved edits on top of whatever was just loaded from the server/cache,
+// so a background poll or refresh can never revert an approver's edit.
+function applyLocalEdits() {
+  if (!LOCAL_EDITS || !Object.keys(LOCAL_EDITS).length) return;
+  noms = noms.map(n => {
+    const e = LOCAL_EDITS[String(n.id)];
+    return e ? { ...n, ...e } : n;
+  });
+}
+async function saveLocalEdits() {
+  try {
+    const data = JSON.stringify(LOCAL_EDITS);
+    if (HAS_ARTIFACT_STORE)   await window.storage.set(EDIT_KEY, data);
+    else if (HAS_LS)          localStorage.setItem(EDIT_KEY, data);
+    else                      _memStore[EDIT_KEY] = data;
+  } catch(e) { console.warn('[Storage] edit-overlay save failed:', e.message); }
+}
+async function loadLocalEdits() {
+  try {
+    let raw = null;
+    if (HAS_ARTIFACT_STORE)   { const r = await window.storage.get(EDIT_KEY); raw = r ? r.value : null; }
+    else if (HAS_LS)          raw = localStorage.getItem(EDIT_KEY);
+    else                      raw = _memStore[EDIT_KEY] || null;
+    if (raw) { const p = JSON.parse(raw); if (p && typeof p === 'object') LOCAL_EDITS = p; }
+  } catch(e) { console.warn('[Storage] edit-overlay load failed:', e.message); }
+}
 
 
 let pollTimer = null;
@@ -1143,6 +1185,7 @@ function stopPoll() { if(pollTimer) { clearInterval(pollTimer); pollTimer = null
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
+  await loadLocalEdits();   // restore any approver edits before the first data load
   const fc = document.getElementById('emp-form-container');
   // Show form immediately with seed data — don't block on PA
   renderEmpForm();
@@ -2181,12 +2224,13 @@ async function saveNomEdits(id, lv){
     return {...n, nominee, role, fn, cat, justif};
   });
   if(!changed.length){ toast('No changes to save.','w'); toggleEdit(id); return; }
+  // Persist a local overlay of these fields so the background poll / refresh can't revert them.
+  LOCAL_EDITS[String(id)] = { ...(LOCAL_EDITS[String(id)]||{}), nominee, role, fn, cat, justif };
+  try { await saveLocalEdits(); } catch(e) {}
   try { await saveNomsToStorage(); } catch(e) {}
-  // Silent full-row sync to Excel via Graph if connected (no email, no status change)
-  if(typeof GRAPH_READY==='function' && GRAPH_READY()){
-    const _n=noms.find(n=>String(n.id)===String(id));
-    if(_n && typeof graphUpdateNomRow==='function') graphUpdateNomRow(_n);
-  }
+  // Best-effort backend sync (full-row write via Graph if signed in, plus PA update carrying
+  // the edited fields). No status change, no approval email.
+  try { await updateNomInSheet(id, 'edit', 'Details edited: '+changed.join(', ')); } catch(e) {}
   auditLog(id, `Details edited by ${AUTH.user?.name||'approver'} (${changed.join(', ')})`, '');
   toast('💾 Details updated — '+changed.join(', ')+'.','ok');
   gv('approvals');
