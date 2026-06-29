@@ -944,8 +944,8 @@ const PA = {
 // We do NOT use no-cors so we can actually read the response.
 
 function paConfigured() {
-  if (!PA.READY || !PA.URL || PA.URL === 'https://defaultb9d69197ce1f49079545b307af2335.e9.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9156255f668c4b989e6eb3d7ab0c7703/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=zgOiHRtv-hbgcdH05SdAnbTx90TWvLvp8w7UnQIyfiY') return false;
-  // Accept both classic (logic.azure.com) and new-format (environment.api.powerplatform.com) PA trigger URLs
+if (!PA.READY || !PA.URL) return false;
+// Accept both classic (logic.azure.com) and new-format (environment.api.powerplatform.com) PA trigger URLs
   return PA.URL.indexOf('http') === 0;
 }
 
