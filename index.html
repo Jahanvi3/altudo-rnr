@@ -1404,7 +1404,7 @@ function renderEmpForm(){
   if (!fc) return;
   fc.innerHTML='';
   // Show PA setup banner if URL isn't configured
-  if (!paConfigured() && PA.URL !== 'YOUR_PA_TRIGGER_URL') {
+  if (!paConfigured() && PA.URL !== 'https://defaultb9d69197ce1f49079545b307af2335.e9.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9156255f668c4b989e6eb3d7ab0c7703/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=zgOiHRtv-hbgcdH05SdAnbTx90TWvLvp8w7UnQIyfiY') {
     // Wrong URL type detected
     const warn = document.createElement('div');
     warn.style.cssText = 'background:#FEE2E2;border:1px solid rgba(220,38,38,.3);border-radius:10px;padding:14px 16px;margin:16px 24px;font-size:12px;color:#991B1B;line-height:1.6';
