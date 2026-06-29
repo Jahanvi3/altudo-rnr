@@ -1577,6 +1577,10 @@ function rnom(el, isAdmin){
     <div class="g2" style="margin-bottom:16px">
       <div class="fg"><label class="fl">Your Full Name *</label><input class="inp" placeholder="e.g. Rahul Mehta" value="${esc(S.fd.nnm)}" oninput="S.fd.nnm=this.value"></div>
       <div class="fg"><label class="fl">Your Email ID *</label><input class="inp" type="email" placeholder="yourname@altudo.co" value="${esc(S.fd.nem)}" oninput="S.fd.nem=this.value"></div>
+      <div class="fg"><label class="fl">Your Designation</label>
+        <select class="sel" onchange="S.fd.ngr=this.value"><option value="">Select grade...</option>${GRADES.map(g=>`<option ${S.fd.ngr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">Your Function / Team</label>
+        <select class="sel" onchange="S.fd.nfn=this.value"><option value="">Select function...</option>${FNS.map(f=>`<option ${S.fd.nfn===f?'selected':''} value="${f}">${f}</option>`).join('')}</select></div>
     </div>
 
     <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--pri);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--pri-bg)">👤 Nominee Details</div>
@@ -1719,7 +1723,7 @@ async function doSubmit(isAdmin){
     id:String(Date.now()), award:S.awd.name, type:S.atype,
     nominee:S.fd.nm, role:S.fd.gr, fn:S.fd.fn,
     nomineeEmail: S.fd.em||'',           // ← nominee's email
-    nominator:S.fd.nnm||nomRole, nRole:S.fd.ngr||nomRoleLbl,
+    nominator:S.fd.nnm||nomRole, nRole:S.fd.ngr||nomRoleLbl, nFn:S.fd.nfn||'',
     nem: S.fd.nem||'',                   // ← nominator's email
     status:ns, q:CYCLE.name, cat:S.awd.cat,
     justif:S.fd.jt, sub:new Date().toISOString().split('T')[0], l1:'', l2:''
@@ -2037,6 +2041,10 @@ function rapp(el){
       </div>
       <div id="edit-${n.id}" style="display:none;border-top:1px dashed var(--line);margin-top:12px;padding-top:12px">
         <div class="fw7 fs11 mb8" style="color:#4F46E5">✏️ Edit nomination details</div>
+        <div class="c-mut fs10 mb2">Award</div>
+        <select id="ed-award-${n.id}" class="sel" style="width:100%;font-size:11px;padding:6px 8px;margin-bottom:8px">
+          ${(()=>{const names=[...new Set(allAwds().map(a=>a.name))];if(n.award&&!names.includes(n.award))names.unshift(n.award);return names.map(nm=>`<option value="${esc(nm)}"${nm===n.award?' selected':''}>${esc(nm)}</option>`).join('');})()}
+        </select>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div><div class="c-mut fs10 mb2">Nominee</div><input id="ed-nominee-${n.id}" class="sel" style="width:100%;font-size:11px;padding:6px 8px" value="${esc(n.nominee)}"></div>
           <div><div class="c-mut fs10 mb2">Designation</div><input id="ed-role-${n.id}" class="sel" style="width:100%;font-size:11px;padding:6px 8px" value="${esc(n.role)}"></div>
@@ -2211,8 +2219,10 @@ async function saveNomEdits(id, lv){
   const role   =(g('role')?.value||'').trim();
   const fn     =(g('fn')?.value||'').trim();
   const cat    =(g('cat')?.value||'').trim();
+  const award  =(g('award')?.value||'').trim();
   const justif =(g('justif')?.value||'').trim();
   if(!nominee){ toast('Nominee name cannot be empty.','w'); return; }
+  if(!award){ toast('Award cannot be empty.','w'); return; }
   const changed=[];
   noms=noms.map(n=>{
     if(String(n.id)!==String(id)) return n;
@@ -2220,12 +2230,13 @@ async function saveNomEdits(id, lv){
     if(role   !==n.role)    changed.push('designation');
     if(fn     !==n.fn)      changed.push('function');
     if(cat    !==n.cat)     changed.push('category');
+    if(award  !==n.award)   changed.push('award');
     if(justif !==n.justif)  changed.push('description');
-    return {...n, nominee, role, fn, cat, justif};
+    return {...n, nominee, role, fn, cat, award, justif};
   });
   if(!changed.length){ toast('No changes to save.','w'); toggleEdit(id); return; }
   // Persist a local overlay of these fields so the background poll / refresh can't revert them.
-  LOCAL_EDITS[String(id)] = { ...(LOCAL_EDITS[String(id)]||{}), nominee, role, fn, cat, justif };
+  LOCAL_EDITS[String(id)] = { ...(LOCAL_EDITS[String(id)]||{}), nominee, role, fn, cat, award, justif };
   try { await saveLocalEdits(); } catch(e) {}
   try { await saveNomsToStorage(); } catch(e) {}
   // Best-effort backend sync (full-row write via Graph if signed in, plus PA update carrying
