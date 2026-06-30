@@ -917,7 +917,7 @@ function extractFileId(url) {
 // ── CYCLE CONFIG — editable by HR admin in Settings ─────────────────────────
 const CYCLE = {
   name:     'Q1 2026',
-  deadline: '2026-06-30',   // YYYY-MM-DD
+  deadline: '2026-07-07',   // YYYY-MM-DD
   active:   true,
 };
 
@@ -1194,7 +1194,7 @@ async function loadLocalEdits() {
 const SETTINGS_KEY = 'altudo-rnr-settings-v1';
 async function saveSettings() {
   try {
-    const data = JSON.stringify({ ejs: EJSCFG, mail: MAIL });
+    const data = JSON.stringify({ ejs: EJSCFG, mail: MAIL, cycle: CYCLE });
     if (HAS_ARTIFACT_STORE)   await window.storage.set(SETTINGS_KEY, data);
     else if (HAS_LS)          localStorage.setItem(SETTINGS_KEY, data);
     else                      _memStore[SETTINGS_KEY] = data;
@@ -1211,6 +1211,7 @@ async function loadSettings() {
       if (p && typeof p === 'object') {
         if (p.ejs && typeof p.ejs === 'object') Object.assign(EJSCFG, p.ejs);
         if (p.mail && typeof p.mail === 'object') Object.assign(MAIL, p.mail);
+        if (p.cycle && typeof p.cycle === 'object') Object.assign(CYCLE, p.cycle);
       }
     }
   } catch(e) { console.warn('[Storage] settings load failed:', e.message); }
@@ -2920,6 +2921,7 @@ function saveCycleSettings(){
   const d=document.getElementById('cfg-dl')?.value?.trim();
   if(!n||!d){toast('Cycle name and deadline are required.','w');return;}
   CYCLE.name=n; CYCLE.deadline=d;
+  saveSettings();   // persist so the cycle survives a reload
   const msg=document.getElementById('cycle-save-msg');
   if(msg){msg.textContent='✅ Saved!';setTimeout(()=>msg.textContent='',3000);}
   toast('Cycle updated to '+n+' · deadline '+d);
