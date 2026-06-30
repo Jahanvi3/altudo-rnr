@@ -1655,7 +1655,7 @@ function rnom(el, isAdmin){
       <div class="fg"><label class="fl">Your Full Name *</label><input class="inp" placeholder="e.g. Rahul Mehta" value="${esc(S.fd.nnm)}" oninput="S.fd.nnm=this.value"></div>
       <div class="fg"><label class="fl">Your Email ID *</label><input class="inp" type="email" placeholder="yourname@altudo.co" value="${esc(S.fd.nem)}" oninput="S.fd.nem=this.value"></div>
       <div class="fg"><label class="fl">Your Designation</label>
-        <select class="sel" onchange="S.fd.ngr=this.value"><option value="">Select grade...</option>${GRADES.map(g=>`<option ${S.fd.ngr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
+        <select class="sel" onchange="S.fd.ngr=this.value"><option value="">Select designation...</option>${GRADES.map(g=>`<option ${S.fd.ngr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
       <div class="fg"><label class="fl">Your Function / Team</label>
         <select class="sel" onchange="S.fd.nfn=this.value"><option value="">Select function...</option>${FNS.map(f=>`<option ${S.fd.nfn===f?'selected':''} value="${f}">${f}</option>`).join('')}</select></div>
     </div>
@@ -1665,7 +1665,7 @@ function rnom(el, isAdmin){
       <div class="fg"><label class="fl">Full Name *</label><input class="inp" placeholder="e.g. Priya Sharma" value="${esc(S.fd.nm)}" oninput="S.fd.nm=this.value"></div>
       <div class="fg"><label class="fl">Email ID</label><input class="inp" type="email" placeholder="nominee@altudo.co" value="${esc(S.fd.em)}" oninput="S.fd.em=this.value"></div>
       <div class="fg"><label class="fl">Designation *</label>
-        <select class="sel" onchange="S.fd.gr=this.value"><option value="">Select grade...</option>${GRADES.map(g=>`<option ${S.fd.gr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
+        <select class="sel" onchange="S.fd.gr=this.value"><option value="">Select designation...</option>${GRADES.map(g=>`<option ${S.fd.gr===g?'selected':''} value="${g}">${g}</option>`).join('')}</select></div>
       <div class="fg"><label class="fl">Function / Team *</label>
         <select class="sel" onchange="S.fd.fn=this.value"><option value="">Select function...</option>${FNS.map(f=>`<option ${S.fd.fn===f?'selected':''} value="${f}">${f}</option>`).join('')}</select></div>
     </div>
