@@ -921,6 +921,17 @@ const CYCLE = {
   active:   true,
 };
 
+// Single source of truth: nominations are closed if the cycle was manually
+// switched off OR the deadline has passed (end of the deadline day).
+function cycleClosed(){
+  if(!CYCLE.active) return true;
+  if(CYCLE.deadline){
+    const dl = new Date(CYCLE.deadline + 'T23:59:59');
+    if(!isNaN(dl) && (dl - new Date()) < 0) return true;
+  }
+  return false;
+}
+
 // ── AUDIT TRAIL — every action is logged in-memory ──────────────────────────
 const AUDIT = [];
 function auditLog(nomId, action, comment='') {
@@ -1530,6 +1541,20 @@ function rnom(el, isAdmin){
     return;
   }
 
+  // Nominations are closed — do not render the form for employees / the public.
+  // (Admins can still open it from the dashboard to manage the cycle.)
+  if(cycleClosed() && !isAdmin){
+    el.innerHTML=`<div class="success-card">
+      <div style="font-size:56px;margin-bottom:12px">🔒</div>
+      <div class="fw8" style="font-size:19px;margin-bottom:8px;color:var(--err)">Nominations Closed</div>
+      <div class="c-mut fs12" style="max-width:380px;margin:0 auto;line-height:1.6">
+        The <strong>${esc(CYCLE.name)}</strong> nomination window is currently closed${CYCLE.deadline?` (deadline ${esc(CYCLE.deadline)})`:''}.
+        Please check back when the next cycle opens. For queries, contact your Function Head or HR.
+      </div>
+    </div>`;
+    return;
+  }
+
   const SN = ['Select Award','Award Info','Nomination Details','Submit'];
   const prog = `<div class="steps mb16">
     ${SN.map((s,i)=>`
@@ -1768,6 +1793,12 @@ function lookupRef(){
 }
 
 async function doSubmit(isAdmin){
+  // Hard stop: a closed cycle cannot accept employee submissions.
+  if(cycleClosed() && isAdmin!=='true'){
+    toast('Nominations are closed for this cycle.');
+    if(isAdmin==='true')gv('nominate'); else renderEmpForm();
+    return;
+  }
   const ns='pending_l1';
   const nomRole = AUTH.user ? AUTH.user.name : 'Employee (Self-service)';
   const nomRoleLbl = AUTH.user ? (AUTH.user.role==='hr'?'HR Manager':'Function Head') : 'Employee';
