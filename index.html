@@ -583,7 +583,7 @@ function buildEmailBody(type, nom, comment) {
 
   const bodies = {
     submitted: {
-      to: nom.nem || '',
+      to: nom.nem || MAIL.HR_EMAIL,
       cc: MAIL.FH_EMAIL,
       subject: `[Altudo R&R] Nomination Submitted Successfully — Ref: ${ref}`,
       body: `Hi Team,
@@ -643,13 +643,11 @@ For queries, please contact your Function Head.`,
 }
 
 async function sendEmail(type, nom, comment='') {
-  // Emails for L2 and L3 actions are intentionally suppressed — this covers approvals,
-  // forwards, returns and rejections at those levels. Only L1 actions (l1_approve,
-  // l1_return, l1_reject) and the submission confirmation (submitted) trigger emails.
-  // Nomination status still updates everywhere; only the emails are skipped.
-  const L2_L3_TYPES = ['l2_approve','l2_forward','l2_return','l2_reject','l3_approve','l3_return','l3_reject'];
-  if(L2_L3_TYPES.includes(type)) {
-    console.log('[Email] L2/L3 email suppressed for', type);
+  // ONLY the submission confirmation email is ever sent. Every approval, forward,
+  // return and rejection notification (L1, L2 and L3) is intentionally suppressed —
+  // the nomination status still updates everywhere; only the emails are skipped.
+  if(type !== 'submitted') {
+    console.log('[Email] Suppressed — only the submission email is sent. Skipped:', type);
     return false;
   }
   if(!EJS_READY()) {
@@ -1059,13 +1057,17 @@ async function updateNomInSheet(id, event='', comment='') {
         justif:  nom.justif  || '',
         award:   nom.award   || '',
         // email context — script generates HTML and PA sends via Outlook
-        _event:          event,
-        _comment:        comment,
-        _reviewer:       AUTH.user?.name || '',
-        _reviewer_role:  AUTH.user?.role === 'function_head' ? 'Function Head' : (AUTH.user?.lvl===3 ? 'L3 Approver' : 'HR'),
-        _nominator_email: nom.nem || '',
-        _fh_email:       MAIL.FH_EMAIL,
-        _hr_email:       MAIL.HR_EMAIL,
+        // Email suppressed: only the submission confirmation is ever emailed. Approval,
+        // return and reject updates carry no event or recipients and set _suppress_email
+        // so the Power Automate flow updates the Excel row WITHOUT sending Outlook mail.
+        _event:           '',
+        _suppress_email:  true,
+        _comment:         comment,
+        _reviewer:        AUTH.user?.name || '',
+        _reviewer_role:   AUTH.user?.role === 'function_head' ? 'Function Head' : (AUTH.user?.lvl===3 ? 'L3 Approver' : 'HR'),
+        _nominator_email: '',
+        _fh_email:        '',
+        _hr_email:        '',
         _nominator:      nom.nominator || '',
         _nominee:        nom.nominee   || '',
         _award:          nom.award     || '',
@@ -1166,6 +1168,34 @@ async function loadLocalEdits() {
   } catch(e) { console.warn('[Storage] edit-overlay load failed:', e.message); }
 }
 
+// ── SETTINGS PERSISTENCE (EmailJS keys + recipient emails) ─────────────────────
+// Without this, EJSCFG/MAIL reset to defaults on every reload, so EJS_READY() goes
+// false and every email (including the submission confirmation) is silently skipped.
+const SETTINGS_KEY = 'altudo-rnr-settings-v1';
+async function saveSettings() {
+  try {
+    const data = JSON.stringify({ ejs: EJSCFG, mail: MAIL });
+    if (HAS_ARTIFACT_STORE)   await window.storage.set(SETTINGS_KEY, data);
+    else if (HAS_LS)          localStorage.setItem(SETTINGS_KEY, data);
+    else                      _memStore[SETTINGS_KEY] = data;
+  } catch(e) { console.warn('[Storage] settings save failed:', e.message); }
+}
+async function loadSettings() {
+  try {
+    let raw = null;
+    if (HAS_ARTIFACT_STORE)   { const r = await window.storage.get(SETTINGS_KEY); raw = r ? r.value : null; }
+    else if (HAS_LS)          raw = localStorage.getItem(SETTINGS_KEY);
+    else                      raw = _memStore[SETTINGS_KEY] || null;
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && typeof p === 'object') {
+        if (p.ejs && typeof p.ejs === 'object') Object.assign(EJSCFG, p.ejs);
+        if (p.mail && typeof p.mail === 'object') Object.assign(MAIL, p.mail);
+      }
+    }
+  } catch(e) { console.warn('[Storage] settings load failed:', e.message); }
+}
+
 
 let pollTimer = null;
 function startPoll() {
@@ -1186,6 +1216,7 @@ function stopPoll() { if(pollTimer) { clearInterval(pollTimer); pollTimer = null
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
   await loadLocalEdits();   // restore any approver edits before the first data load
+  await loadSettings();     // restore EmailJS keys + recipient emails so emails actually send
   const fc = document.getElementById('emp-form-container');
   // Show form immediately with seed data — don't block on PA
   renderEmpForm();
@@ -1730,12 +1761,14 @@ async function doSubmit(isAdmin){
   };
   S.lastNom = newNom;
   noms.unshift(newNom);
-  sendEmail('submitted', newNom, '');
+  // Exactly one submission email. When Power Automate is configured it sends it
+  // server-side (addNomToSheet below); otherwise fall back to the client EmailJS path.
+  if(!paConfigured()) sendEmail('submitted', newNom, '');
   auditLog(newNom.id, 'Nomination submitted', (S.fd.nnm||'Employee') + ' nominated ' + S.fd.nm + ' for ' + (S.awd?.name||''));          // optimistic local update — UI responds instantly
-  addNomToSheet(newNom);         // async: writes Excel row + triggers submission emails via PA
+  addNomToSheet(newNom);         // async: writes Excel row + triggers the submission email via PA
 
   S.nd=true;
-  toast(`Nomination for ${S.fd.nm} submitted! Confirmation emails will arrive shortly.`);
+  toast(`Nomination for ${S.fd.nm} submitted! A confirmation email will arrive shortly.`);
   if(isAdmin==='true')gv('nominate'); else renderEmpForm();
 }
 
@@ -2880,6 +2913,7 @@ function saveEJSSettings(){
   const svc = document.getElementById('cfg-ejs-svc')?.value?.trim();
   const tpl = document.getElementById('cfg-ejs-tpl')?.value?.trim();
   EJSCFG.publicKey=pk||''; EJSCFG.serviceId=svc||''; EJSCFG.templateId=tpl||'';
+  saveSettings();   // persist so EmailJS config survives a reload
   const msg=document.getElementById('ejs-save-msg');
   if(msg){msg.style.color='var(--ok)';msg.textContent=EJS_READY()?'✅ Saved & ready':'⚠️ Saved (incomplete)';setTimeout(()=>msg.textContent='',3000);}
   toast(EJS_READY()?'✅ EmailJS configured — emails will now be sent automatically.':'⚠️ EmailJS partially configured — fill all 3 fields.', EJS_READY()?'ok':'w');
@@ -2905,6 +2939,7 @@ function saveMailSettings(){
   const appurl=document.getElementById('cfg-appurl')?.value?.trim();
   if(!hr||!fh||!l3){toast('HR, Function Head and L3 Approver emails are all required.','w');return;}
   MAIL.HR_EMAIL=hr; MAIL.FH_EMAIL=fh; MAIL.L3_EMAIL=l3; MAIL.APP_URL=appurl||'';
+  saveSettings();   // persist recipient emails so they survive a reload
   const msg=document.getElementById('mail-save-msg');
   if(msg){msg.textContent='✅ Saved!';setTimeout(()=>msg.textContent='',3000);}
   toast('Email addresses updated.');
