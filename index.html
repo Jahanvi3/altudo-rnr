@@ -555,22 +555,21 @@ const DEFAULT_NOMS = [
 // ── Live nominations (always synced from/to shared storage) ──
 let noms = [...DEFAULT_NOMS];
 
-const MO=[{m:'Jan',n:14,a:9},{m:'Feb',n:20,a:15},{m:'Mar',n:26,a:21},{m:'Apr',n:17,a:13},{m:'May',n:31,a:24},{m:'Jun',n:24,a:17}];
-const CD=[{n:'Performance',v:22},{n:'Culture',v:14},{n:'Innovation',v:10},{n:'Learning',v:7},{n:'Leadership',v:3},{n:'Service',v:2}];
+// (Removed hardcoded MO/CD seed arrays — the dashboard now derives every chart
+//  from live nominations via dashData(). See rdash().)
 const GRADES=['Trainee','Senior Architect','Senior Associate','Associate Vice President','Associate Lead','Architect','Manager','Vice President','Senior Director','Senior Solution Consultant','Program Manager','Director','Solution Consultant','Intern','Associate','Senior Manager','Lead','Junior Associate','Junior Sales Development Representative','Associate Architect','Associate Manager','Account Executive','Executive Vice President','Sales Development Representative','Senior Sales Development Representative','Associate Director','Senior Account Executive','Senior Solution Architect','Senior Product Owner','Manager Sales Development Representative','Associate Manager Sales Development Representative','Lead Sales Development Representative','Consultant','Senior Vice President','Product Manager'];
 const FNS=['Human Resource','Sitecore','Frontend','Testing','Optimizely','Commerce','Work Transformation','Delivery','Rainmakers','Data, Analytics & AI','Finance','Administration','Information Technology','Design & Strategy','Project Management','Marketing','Inside Sales','Business Analysis','Quality','DevOps','Data Mining','Digital Marketing','Operation Excellence','NA Sales','Pre Sales','Business Excellence','Sales Operations','Drupal','Digital Experience','Client Engagement','International Sales','Technology and Innovation'];
 
 // RBAC
 const RBAC = {
   function_head: { views:['nominate','approvals'],                               def:'approvals' },
-  hr:            { views:['dashboard','nominate','approvals','mine','posters','auditlog','settings'], def:'dashboard' },
+  hr:            { views:['dashboard','nominate','approvals','posters','auditlog','settings'], def:'dashboard' },
   l3:            { views:['nominate','approvals'],                               def:'approvals' },
 };
 const NAV = [
   {v:'dashboard',ico:'📊',lbl:'Dashboard'},
   {v:'nominate', ico:'📝',lbl:'Nominate'},
   {v:'approvals',ico:'📋',lbl:'Nominations'},
-  {v:'mine',     ico:'👤',lbl:'My Nominations'},
   {v:'posters',  ico:'🏆',lbl:'Winner Certificates'},
   {v:'auditlog',ico:'🗒️',lbl:'Audit Log'},
   {v:'settings', ico:'⚙️', lbl:'Settings'},
@@ -578,7 +577,7 @@ const NAV = [
 
 // Form state
 const S = {view:'',ns:2,atype:'nomination',awd:null,fd:{nm:'',em:'',gr:'',fn:'',tn:'',jt:'',im:'',nnm:'',nem:'',ngr:'',nfn:''},er:null,el:false,nd:false,af:'all',as:''};
-let lineChart=null,donutChart=null,barChart=null;
+let lineChart=null,donutChart=null,barChart=null,funcChart=null,desigChart=null;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // EMAIL CONFIG — addresses only; emails are now sent by the PA flow via Outlook
@@ -1388,7 +1387,7 @@ function startPoll() {
     const hadNew = await loadNoms();
     if (hadNew) {
       renderAdminNav();
-      if (['dashboard','approvals','mine'].includes(S.view)) gv(S.view);
+      if (['dashboard','approvals'].includes(S.view)) gv(S.view);
     }
     // Pull the shared HiPot list too, so edits made on any laptop appear here.
     const hipotChanged = await loadHipotFromBackend();
@@ -1639,7 +1638,7 @@ function gv(v){
         <button class="btn btn-gh btn-sm" onclick="exportXLSX()" style="display:flex;align-items:center;gap:5px">⬇ Download Excel</button>
         <button class="btn btn-pri btn-sm" onclick="resetNF();gv('nominate')">📝 New Nomination</button>
        </div>`
-    : (v==='approvals'||v==='mine')
+    : (v==='approvals')
     ? `<button class="btn btn-gh btn-sm" onclick="refreshFromStorage()">↻ Refresh</button>`
     : '';
   const mc = document.getElementById('mc');
@@ -1647,7 +1646,6 @@ function gv(v){
   else if(v==='nominate')   rnom(mc, true);
   else if(v==='approvals')  rapp(mc);
   else if(v==='awards')     rawds(mc);
-  else if(v==='mine')       rmine(mc);
   else if(v==='posters')    rposters(mc);
   else if(v==='auditlog')   rauditlog(mc);
   else if(v==='settings')   rsettings(mc);
@@ -1980,10 +1978,94 @@ async function doSubmit(isAdmin){
 // ──────────────────────────────────────────────────
 // DASHBOARD (HR only)
 // ──────────────────────────────────────────────────
+const DPAL = ['#4B70F5','#B87817','#059669','#7C3AED','#DB2777','#0891B2','#CA8A04','#64748B','#E11D48','#0D9488','#9333EA','#2563EB','#EA580C','#16A34A','#DC2626','#475569'];
+
+// ── DASHBOARD DATA — everything computed from REAL nominations, no seeded data ──
+// Replaces the old hardcoded MO/CD/[28,18,12] arrays. Groups the live `noms` by
+// month, function, designation, category and award, and derives approval-quality
+// insights (approval rate, HiPot share, top function/nominator) for the exec view.
+function dashData(){
+  const N = Array.isArray(noms) ? noms : [];
+  const norm = s => String(s==null?'':s).trim();
+  const isApproved = n => n.status === 'approved';
+  const isReturned = n => n.status === 'rejected';
+
+  // Monthly trend — last 6 calendar months ending on the current month.
+  const now = new Date();
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({ key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,
+                  m:d.toLocaleDateString('en-US',{month:'short'}), n:0, a:0 });
+  }
+  const mIdx = {}; months.forEach((mm,i)=>{ mIdx[mm.key]=i; });
+  N.forEach(n=>{
+    const key = norm(n.sub).slice(0,7);      // 'YYYY-MM' from 'YYYY-MM-DD'
+    if(key in mIdx){ const mm=months[mIdx[key]]; mm.n++; if(isApproved(n)) mm.a++; }
+  });
+
+  // Generic top-N grouping with an "Other" bucket for the long tail.
+  const bucketOf = n => n.status==='approved' ? 'approved' : (n.status==='rejected' ? 'returned' : 'pending');
+  const countBy = (field, top) => {
+    const map = {};
+    N.forEach(n=>{ const k = norm(n[field]) || '—'; map[k]=(map[k]||0)+1; });
+    let arr = Object.keys(map).map(k=>({n:k,v:map[k]})).sort((a,b)=>b.v-a.v);
+    if(top && arr.length>top){
+      const head = arr.slice(0,top);
+      const rest = arr.slice(top).reduce((s,x)=>s+x.v,0);
+      if(rest>0) head.push({n:'Other', v:rest});
+      arr = head;
+    }
+    return arr;
+  };
+  // Same as countBy, but each group is split by approval outcome, so every bar
+  // carries detail (approved / pending / returned) instead of just a raw total.
+  const segBy = (field, top) => {
+    const map = {};
+    N.forEach(n=>{ const k = norm(n[field]) || '—';
+      if(!map[k]) map[k]={approved:0,pending:0,returned:0,v:0};
+      map[k][bucketOf(n)]++; map[k].v++;
+    });
+    let arr = Object.keys(map).map(k=>({n:k, ...map[k]})).sort((a,b)=>b.v-a.v);
+    if(top && arr.length>top){
+      const head = arr.slice(0,top);
+      const rest = arr.slice(top).reduce((s,x)=>({approved:s.approved+x.approved,pending:s.pending+x.pending,returned:s.returned+x.returned,v:s.v+x.v}),{approved:0,pending:0,returned:0,v:0});
+      if(rest.v>0) head.push({n:'Other', ...rest});
+      arr = head;
+    }
+    return arr;
+  };
+
+  const byFn    = segBy('fn');      // no cap — every function shown individually, no "Other"
+  const byDesig = segBy('role');    // no cap — every designation shown individually
+  const byAward = countBy('award'); // no cap — every award shown individually
+
+  const tot      = N.length;
+  const approved = N.filter(isApproved).length;
+  const returned = N.filter(isReturned).length;
+  const decided  = approved + returned;
+  const hipotN   = N.filter(n=> typeof isHiPot==='function' && isHiPot(n)).length;
+  const hipotPct = tot ? Math.round(hipotN/tot*100) : 0;
+  // HiPot COVERAGE — of the HiPots HR maintains, how many have been nominated.
+  const hipotTotal = (typeof HIPOT!=='undefined' && HIPOT && Array.isArray(HIPOT.list)) ? HIPOT.list.length : 0;
+  const _covered = {};
+  N.forEach(n=>{ const h = (typeof isHiPot==='function') ? isHiPot(n) : null;
+    if(h){ const key=(norm(h.email)||norm(h.name)).toLowerCase(); if(key) _covered[key]=1; } });
+  const hipotCovered = Object.keys(_covered).length;
+  const hipotCovPct  = hipotTotal ? Math.round(hipotCovered/hipotTotal*100) : 0;
+  const topFn    = byFn.filter(x=>x.n!=='Other' && x.n!=='—')[0] || null;
+  const topNom   = countBy('nominator',0).filter(x=>x.n!=='—')[0] || null;
+
+  return { months, byFn, byDesig, byAward,
+           tot, approved, returned, decided, hipotN, hipotPct,
+           hipotTotal, hipotCovered, hipotCovPct, topFn, topNom };
+}
+
 function rdash(el){
   const st=stats();
-  [lineChart,donutChart,barChart].forEach(c=>c&&c.destroy());
-  lineChart=donutChart=barChart=null;
+  const D=dashData();
+  [lineChart,donutChart,barChart,funcChart,desigChart].forEach(c=>c&&c.destroy());
+  lineChart=donutChart=barChart=funcChart=desigChart=null;
   const _dp = PA.READY ? `<div style="background:#F8FAFC;border:1px solid var(--line);border-radius:var(--rad);padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:12px;color:var(--mut);flex:1">🔌 Excel Sync via Power Automate</span><div id="diag-out" style="font-size:11px;flex:2"></div><button class="btn btn-gh btn-sm" onclick="runDiagnostics()">🩺 Test Connection</button></div>` : '';
   el.innerHTML=_dp+gsSetupBanner()+`
   <div class="g4 mb20">
@@ -1992,24 +2074,39 @@ function rdash(el){
       <div class="stat"><div class="stat-ico">${ico}</div><div><div class="stat-val" style="color:${c}">${v}</div><div class="stat-lbl">${lbl}</div></div></div>
     </div>`).join('')}
   </div>
-  <div class="g-ld mb12">
-    <div class="card"><div class="card-t">Monthly Nomination &amp; Approval Trend</div><div style="position:relative;height:200px"><canvas id="lc"></canvas></div></div>
+  <!-- KEY INSIGHTS STRIP — all computed from real nominations -->
+  <div class="g4 mb12">
+    ${[
+      ['🎯', D.hipotCovPct+'%', 'HiPot Coverage', D.hipotCovered+' of '+D.hipotTotal+' HiPots nominated', 'var(--ok)'],
+      ['⭐', D.hipotN, 'HiPot Nominations', D.hipotPct+'% of all noms', 'var(--gold)'],
+      ['🏢', D.topFn?D.topFn.n:'—', 'Top Function', D.topFn?D.topFn.v+' nominations':'no data yet', 'var(--pri)'],
+      ['🙋', D.topNom?D.topNom.n:'—', 'Most Active Nominator', D.topNom?D.topNom.v+' submitted':'no data yet', '#7C3AED'],
+    ].map(([ico,v,lbl,sub,c])=>`
+    <div class="card" style="border-top:3px solid ${c}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:20px">${ico}</div>
+        <div style="min-width:0;flex:1">
+          <div class="fw8" style="font-size:17px;color:${c};white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(String(v))}">${esc(String(v))}</div>
+          <div class="stat-lbl">${esc(lbl)}</div>
+          <div class="c-mut fs10">${esc(sub)}</div>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="g-cp mb12">
     <div class="card">
       <div class="card-t">Award Type Distribution</div>
       <div style="position:relative;height:150px"><canvas id="dc"></canvas></div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
-        ${[['Nomination Awards',28,'var(--pri)'],['On-Spot Awards',18,'var(--gold)'],['Recognition Badges',12,'var(--ok)']].map(([l,v,c])=>`
+        ${(D.byAward.length?D.byAward:[{n:'No nominations yet',v:0}]).map((d,i)=>[d.n,d.v,DPAL[i%DPAL.length]]).map(([l,v,c])=>`
         <div style="display:flex;align-items:center;gap:8px;font-size:11px">
           <div style="width:9px;height:9px;border-radius:2px;background:${c};flex-shrink:0"></div>
           <span class="c-mut" style="flex:1">${l}</span><span class="fw7">${v}</span>
         </div>`).join('')}
       </div>
     </div>
-  </div>
-  <div class="g-cp mb20">
-    <div class="card"><div class="card-t">Nominations by Category</div><div style="position:relative;height:175px"><canvas id="bc"></canvas></div></div>
     <div class="card">
-      <div class="card-t">Approval Pipeline — Q1 2026</div>
+      <div class="card-t">Approval Pipeline — ${esc(CYCLE.name)}</div>
       ${[['Submitted',st.tot,'var(--pri)','Total nominations'],['L1 Review',st.pl1,'var(--warn)','With Function Head'],['HR Review',st.pl2,'#2563EB','Awaiting HR'],['Winners',st.app,'var(--ok)','Confirmed &amp; awarded']].map(([lbl,cnt,c,sub],i,arr)=>`
       <div class="pipe-row">
         <div class="pipe-dot" style="background:${c}18;color:${c};border:1.5px solid ${c}35">${cnt}</div>
@@ -2018,6 +2115,8 @@ function rdash(el){
       </div>${i<arr.length-1?'<div class="pipe-connector"></div>':''}`).join('')}
     </div>
   </div>
+  <div class="card mb12"><div class="card-t">Nominations by Function <span class="c-mut" style="font-weight:400;font-size:11px">· by outcome</span></div><div style="position:relative;height:340px"><canvas id="fc"></canvas></div></div>
+  <div class="card mb20"><div class="card-t">Nominations by Designation <span class="c-mut" style="font-weight:400;font-size:11px">· by outcome</span></div><div style="position:relative;height:360px"><canvas id="gc"></canvas></div></div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div class="card-t" style="margin:0">Recent Nominations</div>
@@ -2034,15 +2133,24 @@ function rdash(el){
   </div>`;
   setTimeout(()=>{
     const gl={color:'rgba(0,0,0,.04)'}, tc={color:'#9CA3AF',font:{size:10}};
-    const lc=document.getElementById('lc');
-    if(lc)lineChart=new Chart(lc,{type:'line',data:{labels:MO.map(d=>d.m),datasets:[
-      {label:'Nominations',data:MO.map(d=>d.n),borderColor:'#4B70F5',backgroundColor:'rgba(75,112,245,.07)',tension:.4,pointRadius:4,borderWidth:2,fill:true},
-      {label:'Approved',data:MO.map(d=>d.a),borderColor:'#059669',backgroundColor:'rgba(5,150,105,.05)',tension:.4,pointRadius:4,borderWidth:2,fill:true},
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6B7A99',boxWidth:11,font:{size:11}}}},scales:{x:{ticks:tc,grid:gl},y:{ticks:tc,grid:gl}}}});
+    // Vertical bars split by approval outcome — categories along the x-axis.
+    const sbar = (id, rows) => {
+      const c=document.getElementById(id); if(!c) return null;
+      return new Chart(c,{type:'bar',
+        data:{labels:rows.map(d=>d.n),datasets:[
+          {label:'Approved',data:rows.map(d=>d.approved),backgroundColor:'#059669',borderRadius:3,stack:'s'},
+          {label:'Pending', data:rows.map(d=>d.pending), backgroundColor:'#D97706',borderRadius:3,stack:'s'},
+          {label:'Returned',data:rows.map(d=>d.returned),backgroundColor:'#DC2626',borderRadius:3,stack:'s'},
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10},color:'#6B7A99'}}},
+          scales:{x:{stacked:true,grid:{display:false},ticks:{...tc,font:{size:9},autoSkip:false,maxRotation:60,minRotation:0}},
+                  y:{stacked:true,grid:gl,beginAtZero:true,ticks:{...tc,precision:0}}}}});
+    };
     const dc=document.getElementById('dc');
-    if(dc)donutChart=new Chart(dc,{type:'doughnut',data:{labels:['Nomination','On-Spot','Recognition'],datasets:[{data:[28,18,12],backgroundColor:['#4B70F5','#B87817','#059669'],borderWidth:2,borderColor:'#fff',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
-    const bc=document.getElementById('bc');
-    if(bc)barChart=new Chart(bc,{type:'bar',data:{labels:CD.map(d=>d.n),datasets:[{label:'Nominations',data:CD.map(d=>d.v),backgroundColor:'rgba(75,112,245,.12)',borderColor:'#4B70F5',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:tc,grid:gl},y:{ticks:{...tc,font:{size:9}},grid:{display:false}}}}});
+    if(dc)donutChart=new Chart(dc,{type:'doughnut',data:{labels:D.byAward.map(d=>d.n),datasets:[{data:D.byAward.map(d=>d.v),backgroundColor:D.byAward.map((d,i)=>DPAL[i%DPAL.length]),borderWidth:2,borderColor:'#fff',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+    funcChart  = sbar('fc', D.byFn);
+    desigChart = sbar('gc', D.byDesig);
   },50);
 }
 
