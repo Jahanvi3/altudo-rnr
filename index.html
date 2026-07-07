@@ -1333,6 +1333,50 @@ async function loadSettings() {
   } catch(e) { console.warn('[Storage] settings load failed:', e.message); }
 }
 
+// ── HiPot list — SHARED across all users via the same Power Automate backend ──
+// FIX for "HiPot doesn't reflect on other laptops": the list now lives in the
+// Excel workbook (a "HiPot" tab) instead of per-device localStorage, so every HR
+// admin on any machine reads and edits ONE source of truth — exactly like
+// nominations. Falls back to the local cache when PA is offline, then re-syncs.
+function _coerceHipotList(arr){
+  if(!Array.isArray(arr)) return null;
+  return arr.map(h=>{
+    if(Array.isArray(h))            return { name:String(h[0]||'').trim(), email:String(h[1]||'').trim(), note:String(h[2]||'').trim() };
+    if(h && typeof h==='object')    return { name:String(h.name||'').trim(), email:String(h.email||'').trim(), note:String(h.note||'').trim() };
+    return null;
+  }).filter(h=>h && (h.name || h.email));
+}
+async function loadHipotFromBackend(){
+  if(!paConfigured()) return false;
+  try{
+    const d = await paCall({ action:'getHipot', data:{} });
+    const list = _coerceHipotList(d && (d.hipot || d.result || d.list));
+    if(list){
+      HIPOT.list = list;
+      saveSettings();              // refresh the local cache with the shared copy
+      return true;
+    }
+  }catch(e){ console.warn('[PA] HiPot load failed — using local cache:', e.message); }
+  return false;
+}
+async function saveHipotToBackend(){
+  if(!paConfigured()) return false;
+  try{
+    await paCall({ action:'saveHipot', data:{ hipot: JSON.stringify(HIPOT.list) } });
+    return true;
+  }catch(e){
+    console.warn('[PA] HiPot save failed:', e.message);
+    toast('⚠️ HiPot saved on this device — Excel sync failed. Others may not see it until the next sync.','w');
+    return false;
+  }
+}
+// Persist a HiPot change everywhere: local cache (instant, this device) + shared
+// backend (all laptops). Used by add/bulk-add/remove instead of a bare saveSettings.
+function persistHipot(){
+  saveSettings();                  // local cache so it survives a reload on THIS device
+  saveHipotToBackend();            // shared source of truth so OTHER devices see it
+}
+
 
 let pollTimer = null;
 function startPoll() {
@@ -1346,6 +1390,9 @@ function startPoll() {
       renderAdminNav();
       if (['dashboard','approvals','mine'].includes(S.view)) gv(S.view);
     }
+    // Pull the shared HiPot list too, so edits made on any laptop appear here.
+    const hipotChanged = await loadHipotFromBackend();
+    if (hipotChanged && S.view === 'settings') _rerenderSettings();
   }, 12000);
 }
 function stopPoll() { if(pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
@@ -1354,6 +1401,7 @@ function stopPoll() { if(pollTimer) { clearInterval(pollTimer); pollTimer = null
 async function init() {
   await loadLocalEdits();   // restore any approver edits before the first data load
   await loadSettings();     // restore EmailJS keys + recipient emails so emails actually send
+  await loadHipotFromBackend().catch(()=>{});   // pull the SHARED HiPot list so this device matches every other one
   const fc = document.getElementById('emp-form-container');
   // Show form immediately with seed data — don't block on PA
   renderEmpForm();
@@ -2598,10 +2646,12 @@ const OFFICE_SCRIPT_TS = `/**
  * Version: 5.0  |  Paste into Excel Online → Automate → New Script → Save as "RnR Handler"
  *
  * Actions handled:
- *   ping   → health check
- *   get    → return all nominations as JSON
- *   add    → insert new nomination row
- *   update → update status / L1 / L2 comment on existing row
+ *   ping      → health check
+ *   get       → return all nominations as JSON
+ *   add       → insert new nomination row
+ *   update    → update status / L1 / L2 comment on existing row
+ *   getHipot  → return the shared High-Potential list (HiPot sheet) as JSON
+ *   saveHipot → overwrite the shared High-Potential list (HiPot sheet)
  *
  * The script returns a JSON string. Power Automate sends emails separately
  * using the _event field and email addresses returned in the response.
@@ -2804,6 +2854,45 @@ function main(workbook: ExcelScript.Workbook, payload: string): string {
       })() : [];
 
       return JSON.stringify({ ok: true, status: newStatus, rowIdx, emails });
+    }
+
+    // ── GET HIPOT — return the shared High-Potential list ────────────────────
+    if (action === "gethipot") {
+      const hs = workbook.getWorksheet("HiPot");
+      if (!hs) return JSON.stringify({ hipot: [] });
+      const hused = hs.getUsedRange();
+      if (!hused) return JSON.stringify({ hipot: [] });
+      const hvals: (string | number | boolean)[][] = hused.getValues();
+      if (hvals.length <= 1) return JSON.stringify({ hipot: [] });
+      const hipot = hvals.slice(1).map(r => ({
+        name:  String(r[0] || ""),
+        email: String(r[1] || ""),
+        note:  String(r[2] || ""),
+      })).filter(h => h.name !== "" || h.email !== "");
+      return JSON.stringify({ hipot });
+    }
+
+    // ── SAVE HIPOT — overwrite the shared High-Potential list ────────────────
+    if (action === "savehipot") {
+      let hs = workbook.getWorksheet("HiPot");
+      if (!hs) { hs = workbook.addWorksheet("HiPot"); }
+      // Clear previous contents so removals actually take effect
+      const oldUsed = hs.getUsedRange();
+      if (oldUsed) { oldUsed.clear(ExcelScript.ClearApplyTo.contents); }
+      // Header row
+      hs.getRange("A1:C1").setValues([["Name", "Email", "Note"]]);
+      hs.getRange("A1:C1").getFormat().getFont().setBold(true);
+      hs.getRange("A1:C1").getFormat().getFill().setColor("#B87817");
+      hs.getRange("A1:C1").getFormat().getFont().setColor("#FFFFFF");
+      let list: { name: string; email: string; note: string }[] = [];
+      try { list = JSON.parse(d.hipot || "[]"); } catch (e) { list = []; }
+      if (list.length) {
+        const rows = list.map(h => [
+          String(h.name || ""), String(h.email || ""), String(h.note || "")
+        ]);
+        hs.getRange("A2:C" + (rows.length + 1)).setValues(rows);
+      }
+      return JSON.stringify({ ok: true, count: list.length });
     }
 
     return JSON.stringify({ error: \`Unknown action: \${action}\` });
@@ -3192,7 +3281,7 @@ function addHiPot(){
   const email = document.getElementById('hipot-email')?.value || '';
   const note  = document.getElementById('hipot-note')?.value  || '';
   if(_hipotAdd(name, email, note, false)){
-    saveSettings();                       // persist so it survives reloads
+    persistHipot();                       // local cache + shared backend (all laptops)
     toast(`⭐ ${(name||email).trim()} added to the HiPot list.`);
     _rerenderSettings();
   }
@@ -3217,7 +3306,7 @@ function addHiPotBulk(){
     note = rest.join(', ');
     if(_hipotAdd(name, email, note, true)) added++; else skipped++;
   });
-  saveSettings();
+  persistHipot();                         // local cache + shared backend (all laptops)
   if(msg){ msg.style.color=added?'var(--ok)':'var(--err)';
     msg.textContent=`Added ${added}${skipped?`, skipped ${skipped} (duplicate/invalid)`:''}.`; }
   if(added) toast(`⭐ ${added} employee${added!==1?'s':''} added to the HiPot list.`);
@@ -3228,7 +3317,7 @@ function removeHiPot(idx){
   const h = HIPOT.list[idx];
   if(!h) return;
   HIPOT.list.splice(idx, 1);
-  saveSettings();
+  persistHipot();                         // local cache + shared backend (all laptops)
   toast(`${h.name || h.email} removed from the HiPot list.`);
   _rerenderSettings();
 }
