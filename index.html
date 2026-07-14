@@ -413,6 +413,13 @@ const AUTH = { user: null };
 // ──────────────────────────────────────────────────
 const AWARDS = {
   nomination:[
+    {id:'lc',  name:'Learning Champion',
+     cat:'Learning',    freq:'Quarterly', count:'3/Q',
+     auth:'HR and Function & Practice Heads',
+     elig:'Trainers, mentors, and those involved in peer-to-peer learning and development activities, irrespective of function and grade',
+     ico:'📚',
+     crit:'Variant 1 — Trainers & Mentors: Conducts at least two training sessions or workshops per quarter and earns an average feedback rating of 4.0 or above. Takes a proactive approach to problem-solving with innovative solutions, and can point to at least two documented instances where their intervention meaningfully improved project outcomes.\nVariant 2 — Continuous Learners (Associate to Senior Manager, 6+ months): Completes at least two trainings in the quarter and shares the learnings back with the team through sessions and workshops. Champions a peer-to-peer learning culture, earns at least one role-relevant certification per quarter, and self-upgrades in line with current and future competency requirements.'},
+
     {id:'cc',  name:'Culture Champion',
      cat:'Culture',     freq:'Quarterly', count:'3/Q',
      auth:'Function & Practice Heads / Directors and above / Leads and above till Senior Managers',
@@ -1387,7 +1394,7 @@ function startPoll() {
     const hadNew = await loadNoms();
     if (hadNew) {
       renderAdminNav();
-      if (['dashboard','approvals'].includes(S.view)) gv(S.view);
+      if (['dashboard','approvals'].includes(S.view) && !isEditing()) gv(S.view);
     }
     // Pull the shared HiPot list too, so edits made on any laptop appear here.
     const hipotChanged = await loadHipotFromBackend();
@@ -1395,6 +1402,17 @@ function startPoll() {
   }, 12000);
 }
 function stopPoll() { if(pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+function isEditing(){
+  // True while an approver has an edit panel open or is typing/selecting in a field.
+  // Keeps the 12s background poll from re-rendering (and collapsing) an active edit.
+  try{
+    var open = Array.prototype.some.call(document.querySelectorAll('[id^="edit-"]'), function(p){ return p.style.display==='block'; });
+    if(open) return true;
+    var ae = document.activeElement;
+    if(ae && (ae.tagName==='TEXTAREA'||ae.tagName==='INPUT'||ae.tagName==='SELECT')) return true;
+  }catch(e){}
+  return false;
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
