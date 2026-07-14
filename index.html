@@ -2296,7 +2296,10 @@ function _slotInfo(nom){
   const total=m?parseInt(m[1],10):null;
   const used   =noms.filter(n=>n.status==='approved'&&n.award===nom.award&&n.q===nom.q).length;
   const pending=noms.filter(n=>n.status!=='approved'&&n.status!=='rejected'&&n.award===nom.award&&n.q===nom.q).length;
-  return{total,used,pending,remaining:total!==null?Math.max(0,total-used):null,ap};
+  // Cumulative pass counts: anything that moved past L1 was L1-approved; past L2 was L2-approved.
+  const l1ok=noms.filter(n=>n.award===nom.award&&n.q===nom.q&&(n.status==='pending_l2'||n.status==='pending_l3'||n.status==='approved')).length;
+  const l2ok=noms.filter(n=>n.award===nom.award&&n.q===nom.q&&(n.status==='pending_l3'||n.status==='approved')).length;
+  return{total,used,pending,l1ok,l2ok,remaining:total!==null?Math.max(0,total-used):null,ap};
 }
 
 function eligBanner(n,lvl){
@@ -2329,6 +2332,7 @@ function eligBanner(n,lvl){
         <span style="font-size:10px;font-weight:800;color:${sc}">🎯 ${esc(n.award)} — Slot Usage (${esc(n.q)})</span>
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
           <span style="font-size:9px;background:${sc};color:#fff;border-radius:10px;padding:2px 8px;font-weight:700">${si.used} of ${si.total} awarded · ${si.remaining} left</span>
+          <span style="font-size:9px;background:#ECFEFF;color:#0E7490;border-radius:10px;padding:2px 7px;border:1px solid #A5F3FC;font-weight:700">L1 ✓ ${si.l1ok}${si.l2ok?` · L2 ✓ ${si.l2ok}`:''}</span>
           ${si.pending>1?`<span style="font-size:9px;background:#EEF2FF;color:#4F46E5;border-radius:10px;padding:2px 7px;border:1px solid #C7D2FE">${si.pending} in queue</span>`:''}
         </div>
       </div>
