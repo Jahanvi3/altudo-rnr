@@ -4315,7 +4315,7 @@ function openPosterModal(id) {
 // Convert "Q2 2026" -> seasonal code like "AMJ'2026" (matches brand format).
 function fmtQuarter(q){
   const m = String(q || '').match(/Q\s*([1-4])\s*'?\s*(\d{2,4})/i);
-  const map = { '1':'JFM', '2':'AMJ', '3':'JAS', '4':'OND' };
+  const map = { '1':'AMJ', '2':'JAS', '3':'OND', '4':'JFM' };
   if(m){ let y = m[2]; if(y.length === 2) y = '20' + y; return `${map[m[1]]}'${y}`; }
   return q || '';
 }
